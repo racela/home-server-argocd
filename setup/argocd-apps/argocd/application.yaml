@@ -13,8 +13,83 @@ spec:
     targetRevision: 8.0.12
     helm:
       releaseName: argocd
-      valueFiles:
-        - ./values.yaml
+      values: |
+        # Namespace to deploy into
+        namespace: argocd
+
+        # Server configuration
+        global:
+          image:
+            tag: v3.0.4           # pin to a specific version
+
+        server:
+          replicaCount: 1         # Single replica for non-HA
+          service:
+            type: ClusterIP
+          resources:
+            requests:
+              cpu: 200m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+
+        repoServer:
+          replicaCount: 1         # Single replica
+          resources:
+            requests:
+              cpu: 150m
+              memory: 200Mi
+            limits:
+              cpu: 300m
+              memory: 400Mi
+
+        controller:
+          replicaCount: 1         # Single replica
+          resources:
+            requests:
+              cpu: 200m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+
+        applicationController:
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 200m
+              memory: 256Mi
+
+        # Dex / SSO: disable if not using external SSO
+        dex:
+          enabled: false
+
+        # Redis and PostgreSQL: use in-cluster defaults
+        redis:
+          enabled: true
+        postgresql:
+          enabled: true
+
+        # RBAC: tighten up default policies
+        rbac:
+          policy: |-
+            p, role:readonly, applications, get, */*, allow
+            g, role:readonly, role:readonly
+
+          scopes:
+            - "repo"
+
+        metrics:
+          enabled: true
+          serviceMonitor:
+            enabled: true    # if using Prometheus Operator
+
+        # Extra args for all components (e.g., log level)
+        extraArgs:
+          - --loglevel=info
   destination:
     server: https://kubernetes.default.svc
     namespace: argocd

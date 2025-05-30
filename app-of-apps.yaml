@@ -9,6 +9,8 @@ spec:
     repoURL: git@github.com:racela/home-server-argocd.git
     path: setup/argocd-apps
     targetRevision: HEAD
+    directory:
+      recurse: true
   destination:
     server: https://kubernetes.default.svc
     namespace: argocd
