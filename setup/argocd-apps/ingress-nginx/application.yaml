@@ -19,7 +19,7 @@ spec:
           nodeSelector: {}
           service:
             type: LoadBalancer        # will get IP from MetalLB
-            externalTrafficPolicy: Local
+            externalTrafficPolicy: Cluster
           admissionWebhooks:
             enabled: false
           resources:
