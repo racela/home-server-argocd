@@ -24,6 +24,7 @@ spec:
               cpu: 100m
               memory: 128Mi
         speaker:
+          ignoreExcludeLB: true
           logLevel: info
           resources:
             limits:
