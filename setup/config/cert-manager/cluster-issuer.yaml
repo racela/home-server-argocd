@@ -1,14 +1,6 @@
 apiVersion: cert-manager.io/v1
 kind: ClusterIssuer
 metadata:
-  name: letsencrypt-staging
+  name: selfsigned-issuer
 spec:
-  acme:
-    email: rafa.hobbies@gmail.com
-    privateKeySecretRef:
-      name: letsencrypt
-    server: https://acme-staging-v02.api.letsencrypt.org/directory
-    solvers:
-      - http01:
-          ingress:
-            class: nginx
+  selfSigned: {}
