@@ -9,7 +9,7 @@ metadata:
     # Redirect HTTP → HTTPS
     nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
     # cert-manager will use this ClusterIssuer to issue certificates
-    cert-manager.io/cluster-issuer: "selfsigned-issuer"  
+    cert-manager.io/cluster-issuer: "home-issuer"  
     # Tell nginx to speak HTTPS to the Argo CD service
     nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
 spec:
