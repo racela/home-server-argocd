@@ -54,14 +54,27 @@ spec:
               cpu: 500m
               memory: 512Mi
 
-        applicationController:
+        applicationSet:
+          enabled: true
+          replicaCount: 1
+          resources:
+            requests:
+              cpu: 150m
+              memory: 200Mi
+            limits:
+              cpu: 300m
+              memory: 400Mi
+
+        notifications:
+          enabled: true
+          replicaCount: 1
           resources:
             requests:
               cpu: 100m
-              memory: 128Mi
+              memory: 150Mi
             limits:
               cpu: 200m
-              memory: 256Mi
+              memory: 300Mi
 
         # Dex / SSO: disable if not using external SSO
         dex:
@@ -70,8 +83,13 @@ spec:
         # Redis and PostgreSQL: use in-cluster defaults
         redis:
           enabled: true
-        postgresql:
-          enabled: true
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 200m
+              memory: 256Mi
 
         # RBAC: tighten up default policies
         rbac:
