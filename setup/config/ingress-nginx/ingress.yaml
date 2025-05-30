@@ -18,7 +18,7 @@ spec:
         - argo.rafa.local
       secretName: argocd-tls            # cert-manager will create this Secret
   rules:
-    - host: argocd.rafa.local
+    - host: argo.rafa.local
       http:
         paths:
           - path: /
