@@ -13,8 +13,24 @@ spec:
     targetRevision: 1.17.2
     helm:
       releaseName: cert-manager
-      valueFiles:
-        - values.yaml
+      values: |
+        crds:
+          enabled: true
+        replicaCount: 1
+        resources:
+          limits:
+            cpu: 200m
+            memory: 256Mi
+          requests:
+            cpu: 100m
+            memory: 128Mi
+        ingressShim:
+          defaultIssuer:
+            name: letsencrypt-staging
+            kind: ClusterIssuer
+        # Use HTTP-01 solver with local ingress
+          http01:
+            ingressClass: nginx
   destination:
     server: https://kubernetes.default.svc
     namespace: cert-manager

@@ -13,8 +13,22 @@ spec:
     targetRevision: 4.12.2
     helm:
       releaseName: ingress-nginx
-      valueFiles:
-        - values.yaml
+      values: |
+        controller:
+          replicaCount: 1
+          nodeSelector: {}
+          service:
+            type: LoadBalancer        # will get IP from MetalLB
+            externalTrafficPolicy: Local
+          admissionWebhooks:
+            enabled: false
+          resources:
+            limits:
+              cpu: 300m
+              memory: 256Mi
+            requests:
+              cpu: 100m
+              memory: 128Mi
   destination:
     server: https://kubernetes.default.svc
     namespace: ingress-nginx
