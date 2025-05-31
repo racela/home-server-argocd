@@ -47,12 +47,18 @@ spec:
           type: LoadBalancer
           port: 32400
         extraVolumes:
-        - name: nfs-data
+        - name: nfs-movies
           persistentVolumeClaim:
-            claimName: plex-data-pvc
+            claimName: plex-movies-pvc
+        - name: nfs-series
+          persistentVolumeClaim:
+            claimName: plex-series-pvc
         extraVolumeMounts:
-        - mountPath: /data
-          name: nfs-data 
+        - mountPath: /movies
+          name: nfs-movies 
+          readOnly: true
+        - mountPath: /series
+          name: nfs-series 
           readOnly: true
   destination:
     server: https://kubernetes.default.svc

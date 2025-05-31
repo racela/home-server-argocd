@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: plex-data-pvc 
+  name: plex-series-pvc 
   namespace: plex              
 spec:
   storageClassName: "nfs-csi"
