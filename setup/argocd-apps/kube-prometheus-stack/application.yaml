@@ -97,22 +97,23 @@ spec:
                       storage: 2Gi
 
         prometheusOperator:
-          annotations:
-            argocd.argoproj.io/hook: PostSync
-            argocd.argoproj.io/hook-delete-policy: HookSucceeded
-
-          patch:
+          admissionWebhooks:
             annotations:
               argocd.argoproj.io/hook: PostSync
               argocd.argoproj.io/hook-delete-policy: HookSucceeded
 
-          mutatingWebhookConfiguration:
-            annotations:
-              argocd.argoproj.io/hook: PreSync
+            patch:
+              annotations:
+                argocd.argoproj.io/hook: PostSync
+                argocd.argoproj.io/hook-delete-policy: HookSucceeded
 
-          validatingWebhookConfiguration:
-            annotations:
-              argocd.argoproj.io/hook: PreSync
+            mutatingWebhookConfiguration:
+              annotations:
+                argocd.argoproj.io/hook: PreSync
+
+            validatingWebhookConfiguration:
+              annotations:
+                argocd.argoproj.io/hook: PreSync
 
   destination:
     server: https://kubernetes.default.svc
