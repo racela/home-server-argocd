@@ -1,2 +1,3 @@
 home-ca-secret.yaml
 plex-claim-secret.yaml
+grafana-admin-secret.yaml
