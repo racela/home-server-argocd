@@ -4,9 +4,9 @@ metadata:
   name: plex-movies-pvc 
   namespace: plex              
 spec:
-  storageClassName: "nfs-csi"
+  volumeName: plex-movies-pv
   accessModes:
     - ReadWriteMany         
   resources:
     requests:
-      storage: 1Ti           
+      storage: 500Gi       

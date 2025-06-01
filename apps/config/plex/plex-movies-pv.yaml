@@ -1,0 +1,22 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: plex-movies-pv
+spec:
+  accessModes:
+  - ReadWriteMany
+  capacity:
+    storage: 500Gi
+  csi:
+    driver: nfs.csi.k8s.io
+    volumeAttributes:
+      server: 192.168.1.111
+      share: /mnt/data
+      subdir: movies
+    volumeHandle: 192.168.1.111#mnt/data#movies##
+  mountOptions:
+  - nfsvers=4.2
+  - hard
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: nfs-csi
+  volumeMode: Filesystem
