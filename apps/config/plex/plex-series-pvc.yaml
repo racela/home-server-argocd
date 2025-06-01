@@ -5,6 +5,7 @@ metadata:
   namespace: plex              
 spec:
   volumeName: plex-series-pv
+  storageClassName: nfs-csi
   accessModes:
     - ReadWriteMany         
   resources:
