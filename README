@@ -1,1 +1,8 @@
-To do: Convert all secrets to sealed secrets
+To do:
+- Install immich, home assistant, deluge, sonarr, radarr
+- Convert plex pvcs into manual pv
+- Setup monitoring, alerts for down services
+- Convert all secrets to sealed secrets
+- Figure out how to bootstrap cluster
+  - Secrets are needed for plex, grafana, cert-manager
+- Figure out how to create namespaces with necessary labels
