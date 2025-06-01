@@ -1,129 +1,129 @@
-apiVersion: argoproj.io/v1alpha1
-kind: Application
-metadata:
-  name: kube-prometheus-stack
-  namespace: argocd
-  annotations:
-    argocd.argoproj.io/sync-wave: "1"
-spec:
-  project: default
-  source:
-    chart: kube-prometheus-stack
-    repoURL: https://prometheus-community.github.io/helm-charts
-    targetRevision: 72.8.0
-    helm:
-      releaseName: kube-prometheus-stack
-      values: |
-        global:
-          rbac:
-            create: true
+# apiVersion: argoproj.io/v1alpha1
+# kind: Application
+# metadata:
+#   name: kube-prometheus-stack
+#   namespace: argocd
+#   annotations:
+#     argocd.argoproj.io/sync-wave: "1"
+# spec:
+#   project: default
+#   source:
+#     chart: kube-prometheus-stack
+#     repoURL: https://prometheus-community.github.io/helm-charts
+#     targetRevision: 72.8.0
+#     helm:
+#       releaseName: kube-prometheus-stack
+#       values: |
+#         global:
+#           rbac:
+#             create: true
 
-        # Reduce retention and resource usage for Prometheus
-        prometheus:
-          prometheusSpec:
-            retention: 24h
-            scrapeInterval: 60s
-            evaluationInterval: 60s
-            resources:
-              requests:
-                memory: 300Mi
-                cpu: 100m
-              limits:
-                memory: 700Mi
-                cpu: 500m
-            storageSpec:
-              volumeClaimTemplate:
-                spec:
-                  storageClassName: longhorn
-                  accessModes: ["ReadWriteOnce"]
-                  resources:
-                    requests:
-                      storage: 5Gi
-            enableAdminAPI: false
+#         # Reduce retention and resource usage for Prometheus
+#         prometheus:
+#           prometheusSpec:
+#             retention: 24h
+#             scrapeInterval: 60s
+#             evaluationInterval: 60s
+#             resources:
+#               requests:
+#                 memory: 300Mi
+#                 cpu: 100m
+#               limits:
+#                 memory: 700Mi
+#                 cpu: 500m
+#             storageSpec:
+#               volumeClaimTemplate:
+#                 spec:
+#                   storageClassName: longhorn
+#                   accessModes: ["ReadWriteOnce"]
+#                   resources:
+#                     requests:
+#                       storage: 5Gi
+#             enableAdminAPI: false
 
-        # Lighten Grafana resource usage
-        grafana:
-          enabled: true
-          admin:
-            existingSecret: grafana-admin-secret
-            userKey: admin-user
-            passwordKey: admin-password
-          resources:
-            requests:
-              memory: 150Mi
-              cpu: 50m
-            limits:
-              memory: 300Mi
-              cpu: 200m
-          persistence:
-            enabled: false
-          defaultDashboardsEnabled: true
+#         # Lighten Grafana resource usage
+#         grafana:
+#           enabled: true
+#           admin:
+#             existingSecret: grafana-admin-secret
+#             userKey: admin-user
+#             passwordKey: admin-password
+#           resources:
+#             requests:
+#               memory: 150Mi
+#               cpu: 50m
+#             limits:
+#               memory: 300Mi
+#               cpu: 200m
+#           persistence:
+#             enabled: false
+#           defaultDashboardsEnabled: true
 
-        # Reduce memory usage by setting smaller resource requests/limits
-        kube-state-metrics:
-          resources:
-            requests:
-              memory: 100Mi
-              cpu: 50m
-            limits:
-              memory: 200Mi
-              cpu: 100m
+#         # Reduce memory usage by setting smaller resource requests/limits
+#         kube-state-metrics:
+#           resources:
+#             requests:
+#               memory: 100Mi
+#               cpu: 50m
+#             limits:
+#               memory: 200Mi
+#               cpu: 100m
 
-        prometheus-node-exporter:
-          resources:
-            requests:
-              memory: 30Mi
-              cpu: 20m
-            limits:
-              memory: 100Mi
-              cpu: 50m
+#         prometheus-node-exporter:
+#           resources:
+#             requests:
+#               memory: 30Mi
+#               cpu: 20m
+#             limits:
+#               memory: 100Mi
+#               cpu: 50m
 
-        alertmanager:
-          alertmanagerSpec:
-            resources:
-              requests:
-                memory: 100Mi
-                cpu: 50m
-              limits:
-                memory: 200Mi
-                cpu: 100m
-            storage:
-              volumeClaimTemplate:
-                spec:
-                  storageClassName: longhorn
-                  accessModes: ["ReadWriteOnce"]
-                  resources:
-                    requests:
-                      storage: 2Gi
+#         alertmanager:
+#           alertmanagerSpec:
+#             resources:
+#               requests:
+#                 memory: 100Mi
+#                 cpu: 50m
+#               limits:
+#                 memory: 200Mi
+#                 cpu: 100m
+#             storage:
+#               volumeClaimTemplate:
+#                 spec:
+#                   storageClassName: longhorn
+#                   accessModes: ["ReadWriteOnce"]
+#                   resources:
+#                     requests:
+#                       storage: 2Gi
 
-        prometheusOperator:
-          admissionWebhooks:
-            annotations:
-              argocd.argoproj.io/hook: PostSync
-              argocd.argoproj.io/hook-delete-policy: HookSucceeded
+#         prometheusOperator:
+#           admissionWebhooks:
+#             annotations:
+#               argocd.argoproj.io/hook: PostSync
+#               argocd.argoproj.io/hook-delete-policy: HookSucceeded
 
-            patch:
-              annotations:
-                argocd.argoproj.io/hook: PostSync
-                argocd.argoproj.io/hook-delete-policy: HookSucceeded
+#             patch:
+#               annotations:
+#                 argocd.argoproj.io/hook: PostSync
+#                 argocd.argoproj.io/hook-delete-policy: HookSucceeded
 
-            mutatingWebhookConfiguration:
-              annotations:
-                argocd.argoproj.io/hook: PreSync
+#             mutatingWebhookConfiguration:
+#               annotations:
+#                 argocd.argoproj.io/hook: PreSync
 
-            validatingWebhookConfiguration:
-              annotations:
-                argocd.argoproj.io/hook: PreSync
+#             validatingWebhookConfiguration:
+#               annotations:
+#                 argocd.argoproj.io/hook: PreSync
 
-  destination:
-    server: https://kubernetes.default.svc
-    namespace: monitoring
-  syncPolicy:
-    automated:
-      prune: true
-      selfHeal: true
-    syncOptions:
-    - CreateNamespace=true
+#   destination:
+#     server: https://kubernetes.default.svc
+#     namespace: monitoring
+#   syncPolicy:
+#     automated:
+#       prune: true
+#       selfHeal: true
+#     syncOptions:
+#     - CreateNamespace=true
 # ---
 # apiVersion: argoproj.io/v1alpha1
 # kind: Application
