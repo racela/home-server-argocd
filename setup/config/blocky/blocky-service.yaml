@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: blocky-lb
+  name: blocky-udp-lb
   namespace: blocky
   annotations:
         metallb.universe.tf/allow-shared-ip: 'blocky'
@@ -19,7 +19,7 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: blocky-lb
+  name: blocky-tcp-lb
   namespace: blocky
   annotations:
         metallb.universe.tf/allow-shared-ip: 'blocky'
