@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: blocky
+  namespace: blocky
+spec:
+  selector:
+    matchLabels:
+      app: blocky
+  template:
+    metadata:
+      labels:
+        app: blocky
+    spec:
+      containers:
+        - name: blocky
+          image: spx01/blocky:v0.26.2
+          imagePullPolicy: IfNotPresent
+          resources:
+            limits:
+              memory: 150Mi
+            requests:
+              cpu: 20m
+              memory: 100Mi
+          env:
+            - name: TZ
+              value: "Asia/Manila"
+          ports:
+            - containerPort: 53
+              name: dns-udp
+              protocol: UDP
+            - containerPort: 53
+              name: dns-tcp
+              protocol: TCP
+            - containerPort: 4000
+              name: metrics
+              protocol: TCP
+          volumeMounts:
+            - name: config-volume
+              mountPath: /app/config.yml
+              subPath: config.yml
+      volumes:
+        - name: config-volume
+          configMap:
+            name: blocky-configmap
