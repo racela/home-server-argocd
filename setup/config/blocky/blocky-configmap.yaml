@@ -11,14 +11,15 @@ data:
           - 1.1.1.1
           - 8.8.8.8
     blocking:
-      blackLists:
+      denyLists:
         ads:
           - https://raw.githubusercontent.com/hagezi/dns-blocklists/main/wildcard/pro.txt
       clientGroupsBlock:
         default:
           - ads
-    port: 53
-    httpPort: 4000
+    ports
+      dns: 53
+      http: 4000
     customDNS:
       customTTL: 1h
       mapping:
