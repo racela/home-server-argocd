@@ -11,7 +11,7 @@ data:
           - 1.1.1.1
           - 8.8.8.8
     blocking:
-      denyLists:
+      denylists:
         ads:
           - https://raw.githubusercontent.com/hagezi/dns-blocklists/main/wildcard/pro.txt
       clientGroupsBlock:
