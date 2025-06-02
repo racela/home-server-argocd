@@ -20,7 +20,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: blocky-lb
-  namespace: networking
+  namespace: blocky
   annotations:
         metallb.universe.tf/allow-shared-ip: 'blocky'
 spec:
