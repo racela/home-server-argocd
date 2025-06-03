@@ -1,0 +1,84 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: home-assistant
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "4"
+spec:
+  project: default
+  source:
+    chart: home-assistant
+    repoURL: http://pajikos.github.io/home-assistant-helm-chart/
+    targetRevision: 0.3.4
+    helm:
+      releaseName: home-assistant
+      values: |
+        env:
+        - name: TZ
+          value: Asia/Manila
+
+        resources:
+          limits:
+            memory: 256Mi
+          requests:
+            cpu: 100m
+            memory: 128Mi
+
+        persistence:
+          enabled: true
+          storageClass: longhorn
+          size: 5Gi
+
+        ingress:
+          enabled: true
+          annotations:
+            kubernetes.io/ingress.class: "nginx"
+            nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+            cert-manager.io/cluster-issuer: "home-issuer"  
+            nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
+          tls:
+            - hosts:
+                - home-assistant.rafa.local
+              secretName: home-assistant-tls   
+          hosts:
+            - host: home-assistant.rafa.local
+              paths:
+                - path: /
+                  pathType: Prefix
+        
+        configuration:
+          enabled: true
+          forceInit: true
+          trusted_proxies:
+            - 10.42.0.0/16 
+            - 192.168.0.0/16
+          templateConfig: |-
+            # Loads default set of integrations. Do not remove.
+            default_config:
+
+            {{- if .Values.ingress.enabled }}
+            http:
+              use_x_forwarded_for: true
+              trusted_proxies:
+                {{- range .Values.configuration.trusted_proxies }}
+                - {{ . }}
+                {{- end }}
+            {{- end}}
+            # Load frontend themes from the themes folder
+            frontend:
+              themes: !include_dir_merge_named themes
+
+            automation: !include automations.yaml
+            script: !include scripts.yaml
+            scene: !include scenes.yaml
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: home-assistant
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+    - CreateNamespace=true

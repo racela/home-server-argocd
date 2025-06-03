@@ -1,5 +1,6 @@
 To do:
 - Install immich, home assistant, deluge, sonarr, radarr, renovate, tailscale?
+- Make sure static IPs for nginx,  plex
 - Setup monitoring, alerts for down services
 - Convert all secrets to sealed secrets
 - Figure out how to bootstrap cluster
