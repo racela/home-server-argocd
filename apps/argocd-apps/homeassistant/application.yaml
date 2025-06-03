@@ -19,11 +19,11 @@ spec:
           value: Asia/Manila
 
         resources:
-          limits:
-            memory: 256Mi
           requests:
-            cpu: 100m
-            memory: 128Mi
+            cpu: "100m"
+            memory: "512Mi"
+          limits:
+            memory: "1Gi"
 
         persistence:
           enabled: true
