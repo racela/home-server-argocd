@@ -1,0 +1,48 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: deluge
+  namespace: plex
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: deluge
+  template:
+    metadata:
+      labels:
+        app: deluge
+    spec:
+      containers:
+        - name: deluge
+          image: linuxserver/deluge:2.2.0
+          ports:
+            - containerPort: 8112   # Web UI
+            - containerPort: 6881 
+            - containerPort: 6881 
+              protocol: UDP
+            - containerPort: 58846 
+          env:
+            - name: PUID
+              value: "1000"  # Replace with your actual UID
+            - name: PGID
+              value: "1000"  # Replace with your actual GID
+            - name: TZ
+              value: "PHT"
+          volumeMounts:
+            - name: config
+              mountPath: /config
+            - name: movies
+              mountPath: /downloads/movies
+            - name: series
+              mountPath: /downloads/series
+      volumes:
+        - name: config
+          persistentVolumeClaim:
+            claimName: deluge-config-pvc
+        - name: movies
+          persistentVolumeClaim:
+            claimName: plex-movies-pvc
+        - name: series
+          persistentVolumeClaim:
+            claimName: plex-series-pvc
