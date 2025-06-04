@@ -17,6 +17,8 @@ data:
       clientGroupsBlock:
         default:
           - ads
+    prometheus:
+      enable: true
     ports:
       dns: 53
       http: 4000
