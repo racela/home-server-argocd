@@ -5,5 +5,5 @@ To do:
 - Convert all secrets to sealed secrets
 - Figure out how to bootstrap cluster
   - Secrets are needed for plex, grafana, cert-manager
-- Figure out how to create namespaces with necessary labels
+- Figure out how to create namespaces with necessary labels since some of them dont work cause of talos
 - Terraform for proxmox and talos

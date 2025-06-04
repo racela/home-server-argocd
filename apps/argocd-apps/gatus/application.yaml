@@ -1,0 +1,107 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: gatus
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "4"
+spec:
+  project: default
+  source:
+    chart: gatus
+    repoURL: https://twin.github.io/helm-charts
+    targetRevision: 1.2.0
+    helm:
+      releaseName: gatus
+      values: |
+        ingress:
+          enabled: true
+          annotations:
+            kubernetes.io/ingress.class: "nginx"
+            nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+            cert-manager.io/cluster-issuer: "home-issuer"  
+            nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
+          tls:
+            - hosts:
+                - gatus.rafa.local
+              secretName: gatus-tls   
+          hosts:
+            - host: gatus.rafa.local
+              paths:
+                - path: /
+                  pathType: Prefix
+        config:
+          metrics: true
+          endpoints:
+            - name: Plex
+              group: media
+              url: http://plex-plex-media-server.plex.svc.cluster.local/identity:32400
+              interval: 1m
+              conditions:
+                - "[STATUS] == 200"
+
+            - name: Home Assistant
+              group: automation
+              url: http://home-assistant.home-assistant.svc.cluster.local/manifest.json:8080
+              interval: 1m
+              conditions:
+                - "[STATUS] == 200"
+
+            - name: Longhorn UI
+              group: storage
+              url: http://longhorn-frontend.longhorn-system.svc.cluster.local:80
+              interval: 1m
+              conditions:
+                - "[STATUS] == 200"
+
+            - name: Deluge Web UI
+              group: media
+              url: http://deluge.plex.svc.cluster.local:8112
+              interval: 1m
+              conditions:
+                - "[STATUS] == 200"
+
+            - name: Grafana
+              group: observability
+              url: http://kube-prometheus-stack-grafana.monitoring.svc.cluster.local/healthz:3000
+              interval: 1m
+              conditions:
+                - "[STATUS] == 200"
+
+            - name: Prometheus
+              group: observability
+              url: http://prometheus-operated.monitoring.svc.cluster.local/metrics:9090
+              interval: 1m
+              conditions:
+                - "[STATUS] == 200"
+
+            - name: ArgoCD
+              group: gitops
+              url: http://argocd-server.argocd.svc.cluster.local/healthz:80
+              interval: 1m
+              conditions:
+                - "[STATUS] == 200"
+
+            - name: Blocky
+              group: dns
+              url: http://blocky-http.kube-system.svc.cluster.local:4000
+              interval: 1m
+              conditions:
+                - "[STATUS] == 200"
+
+          resources:
+           limits:
+             memory: 256Mi
+           requests:
+             cpu: 50m
+             memory: 128Mi
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: gatus
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+    - CreateNamespace=true
