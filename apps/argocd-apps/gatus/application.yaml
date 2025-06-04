@@ -62,7 +62,7 @@ spec:
 
             - name: Grafana
               group: observability
-              url: http://kube-prometheus-stack-grafana.monitoring.svc.cluster.local:3000/healthz
+              url: http://kube-prometheus-stack-grafana.monitoring.svc.cluster.local/healthz
               interval: 1m
               conditions:
                 - "[STATUS] == 200"
@@ -78,7 +78,8 @@ spec:
               group: gitops
               url: http://argocd-server.argocd.svc.cluster.local/healthz
               interval: 1m
-              insecure: true
+              client:
+                insecure: true
               conditions:
                 - "[STATUS] == 200"
 
