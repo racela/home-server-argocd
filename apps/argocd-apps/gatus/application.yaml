@@ -34,21 +34,21 @@ spec:
           endpoints:
             - name: Plex
               group: media
-              url: plex-plex-media-server.plex.svc.cluster.local/identity:32400
+              url: http://plex-plex-media-server.plex.svc.cluster.local:32400/identity
               interval: 1m
               conditions:
                 - "[STATUS] == 200"
 
             - name: Home Assistant
               group: automation
-              url: home-assistant.home-assistant.svc.cluster.local/manifest.json:8080
+              url: http://home-assistant.home-assistant.svc.cluster.local:8080/manifest.json
               interval: 1m
               conditions:
                 - "[STATUS] == 200"
 
             - name: Longhorn UI
               group: storage
-              url: http://longhorn-frontend.longhorn-system.svc.cluster.local:80
+              url: http://longhorn-frontend.longhorn-system.svc.cluster.local
               interval: 1m
               conditions:
                 - "[STATUS] == 200"
@@ -62,21 +62,21 @@ spec:
 
             - name: Grafana
               group: observability
-              url: http://kube-prometheus-stack-grafana.monitoring.svc.cluster.local/healthz:3000
+              url: http://kube-prometheus-stack-grafana.monitoring.svc.cluster.local:3000/healthz
               interval: 1m
               conditions:
                 - "[STATUS] == 200"
 
             - name: Prometheus
               group: observability
-              url: prometheus-operated.monitoring.svc.cluster.local/metrics:9090
+              url: http://prometheus-operated.monitoring.svc.cluster.local:9090/metrics
               interval: 1m
               conditions:
                 - "[STATUS] == 200"
 
             - name: ArgoCD
               group: gitops
-              url: http://argocd-server.argocd.svc.cluster.local/healthz:80
+              url: http://argocd-server.argocd.svc.cluster.local/healthz
               interval: 1m
               insecure: true
               conditions:
@@ -84,7 +84,7 @@ spec:
 
             - name: Blocky
               group: dns
-              url: http://blocky-http.blocky.svc.cluster.local:4000
+              url: http://blocky-http.blocky.svc.cluster.local:4000/metrics
               interval: 1m
               conditions:
                 - "[STATUS] == 200"
