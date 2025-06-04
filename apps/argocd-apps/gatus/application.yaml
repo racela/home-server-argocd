@@ -26,10 +26,9 @@ spec:
                 - gatus.rafa.local
               secretName: gatus-tls   
           hosts:
-            - host: gatus.rafa.local
-              paths:
-                - path: /
-                  pathType: Prefix
+            - gatus.rafa.local
+          path: /
+          pathType: Prefix
         config:
           metrics: true
           endpoints:
