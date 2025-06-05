@@ -90,6 +90,13 @@ spec:
               conditions:
                 - "[STATUS] == 200"
 
+            - name: Otterwiki
+              group: wiki
+              url: http://otterwiki.otterwiki.svc.cluster.local/-/healthz
+              interval: 1m
+              conditions:
+                - "[STATUS] == 200"
+
           resources:
            limits:
              memory: 256Mi
