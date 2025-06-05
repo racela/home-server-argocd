@@ -10,7 +10,7 @@ spec:
   source:
     chart: otterwiki
     repoURL: https://charts.otterwiki.com
-    targetRevision: 1.0.2
+    targetRevision: 0.1.0
     helm:
       releaseName: otterwiki
       values: |
