@@ -26,6 +26,7 @@ spec:
             }
         podSecurityContext:
           runAsNonRoot: true
+          fsGroup: 12021
           seccompProfile:
             type: RuntimeDefault
         containerSecurityContext:
