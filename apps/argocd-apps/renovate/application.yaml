@@ -8,7 +8,7 @@ metadata:
 spec:
   project: default
   source:
-    chart: renovate
+    chart: mend-renovate-ce
     repoURL: https://mend.github.io/renovate-ce-ee
     targetRevision: 10.1.0
     helm:
