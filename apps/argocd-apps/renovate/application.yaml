@@ -24,6 +24,18 @@ spec:
               // Enter self-hosted configuration options here.
               // https://docs.renovatebot.com/self-hosted-configuration/
             }
+        podSecurityContext:
+          runAsNonRoot: true
+          seccompProfile:
+            type: RuntimeDefault
+        containerSecurityContext:
+          allowPrivilegeEscalation: false
+          runAsNonRoot: true
+          runAsUser: 12021
+          readOnlyRootFilesystem: false
+          capabilities:
+            drop:
+              - ALL
         cachePersistence:
           enabled: true
           storageClass: longhorn 
