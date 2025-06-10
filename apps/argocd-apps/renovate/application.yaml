@@ -1,0 +1,57 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: renovate
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "4"
+spec:
+  project: default
+  source:
+    chart: renovate
+    repoURL: https://mend.github.io/renovate-ce-ee
+    targetRevision: 10.1.0
+    helm:
+      releaseName: renovate
+      values: |
+        renovate:
+          mendRnvAcceptTos: 'y'
+          mendRnvPlatform: 'github'
+          mendRnvEndpoint: 'https://api.github.com/'
+          existingSecret: renovate-secret
+          config: |
+            module.exports = {
+              // Enter self-hosted configuration options here.
+              // https://docs.renovatebot.com/self-hosted-configuration/
+            }
+          cachePersistence:
+            enabled: true
+            storageClass: longhorn 
+            accessModes:
+              - ReadWriteOnce
+            size: 1Gi
+          ingress:
+            enabled: true
+            ingressClassName: nginx
+            annotations:
+              nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+              cert-manager.io/cluster-issuer: "home-issuer"  
+              nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
+            hosts:
+              renovate.rafa.local:
+                paths:
+                  - path: "/"
+                    pathType: Prefix
+            tls:
+             - secretName: mend-renovate-tls
+               hosts:
+                 - renovate.rafa.local
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: renovate
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+    - CreateNamespace=true
