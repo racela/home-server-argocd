@@ -1,5 +1,5 @@
 To do:
-- Install immich, home assistant, deluge, sonarr, radarr, renovate, tailscale?
+- Install immich, deluge, sonarr, radarr, renovate, velero
 - Make sure static IPs for nginx,  plex
 - Setup monitoring, alerts for down services
 - Convert all secrets to sealed secrets
@@ -7,3 +7,5 @@ To do:
   - Secrets are needed for plex, grafana, cert-manager
 - Figure out how to create namespaces with necessary labels since some of them dont work cause of talos
 - Terraform for proxmox and talos
+- Buy UPS and setup shutdown process
+- Buy barracuda drive for backup, setup with velero?
