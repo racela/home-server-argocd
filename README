@@ -1,5 +1,5 @@
 To do:
-- Install immich, deluge, sonarr, radarr, renovate, velero
+- Install immich, deluge, sonarr, radarr
 - Make sure static IPs for nginx,  plex
 - Setup monitoring, alerts for down services
 - Convert all secrets to sealed secrets
@@ -8,4 +8,4 @@ To do:
 - Figure out how to create namespaces with necessary labels since some of them dont work cause of talos
 - Terraform for proxmox and talos
 - Buy UPS and setup shutdown process
-- Buy barracuda drive for backup, setup with velero?
+- Buy barracuda drive for backup, setup with longhorn
