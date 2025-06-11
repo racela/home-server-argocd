@@ -9,7 +9,6 @@
   "packageRules": [
     {
       "matchUpdateTypes": ["minor", "patch"],
-      "matchAuthor": "renovate[bot]",
       "matchCurrentVersion": "!/^0/",
       "automerge": true
     }
