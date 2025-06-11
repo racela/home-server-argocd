@@ -1,0 +1,52 @@
+name: Validate ArgoCD Application
+
+on:
+  pull_request:
+    paths:
+      - 'apps/argocd-apps/**.yaml'
+      - 'setup/argocd-apps/**.yaml'
+  merge_group:
+
+jobs:
+  validate-argocd-app:
+    name: Validate Changed ArgoCD App
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v3
+
+      - name: Install yq
+        uses: mikefarah/yq@v4
+
+      - name: Identify changed Application manifest
+        id: changed_file
+        run: |
+          FILE=$(git diff --name-only origin/${{ github.base_ref }} | \
+                 grep -E '^(apps|setup)/argocd-apps/.*\.ya?ml$' | head -n 1)
+          if [ -z "$FILE" ]; then
+            echo "No application file changed. Skipping."
+            exit 1
+          fi
+          echo "app_file=$FILE" >> $GITHUB_OUTPUT
+
+      - name: Extract inline Helm values
+        run: |
+          yq eval '.spec.source.helm.values' "${{ steps.changed_file.outputs.app_file }}" > inline-values.yaml
+
+      - name: Determine chart path
+        id: chart_path
+        run: |
+          CHART_PATH=$(yq eval '.spec.source.path' "${{ steps.changed_file.outputs.app_file }}")
+          echo "chart_path=$CHART_PATH" >> $GITHUB_OUTPUT
+
+      - name: Lint Helm chart
+        run: |
+          helm lint "${{ steps.chart_path.outputs.chart_path }}" -f inline-values.yaml
+
+      - name: Template Helm chart
+        run: |
+          helm template test-release "${{ steps.chart_path.outputs.chart_path }}" -f inline-values.yaml
