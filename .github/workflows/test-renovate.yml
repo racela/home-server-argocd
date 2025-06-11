@@ -22,6 +22,10 @@ jobs:
       - name: Install yq
         uses: mikefarah/yq@v4
 
+      - name: Fetch base branch
+        run: |
+          git fetch origin ${{ github.base_ref }} --depth=1
+
       - name: Identify changed Application manifest
         id: changed_file
         run: |
