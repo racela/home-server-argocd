@@ -1,0 +1,26 @@
+apiVersion: postgresql.cnpg.io/v1
+kind: Database
+metadata:
+  name: immich-db
+  namespace: cloudnative-pg
+spec:
+  # target the Cluster created above
+  cluster:
+    name: immich-cluster
+
+  # logical database name & owner
+  name: immich
+  owner: immich
+
+  # ensure all Immich‑required extensions are present
+  extensions:
+    - name: vector
+      ensure: present
+    - name: vchord
+      ensure: present
+      version: 0.3.0
+    - name: earthdistance
+      ensure: present
+
+  # if you ever delete this Database CRD, Retain prevents dropping the DB unexpectedly
+  databaseReclaimPolicy: Retain
