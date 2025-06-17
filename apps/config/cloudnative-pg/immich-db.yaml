@@ -23,4 +23,4 @@ spec:
       ensure: present
 
   # if you ever delete this Database CRD, Retain prevents dropping the DB unexpectedly
-  databaseReclaimPolicy: Retain
+  databaseReclaimPolicy: retain
