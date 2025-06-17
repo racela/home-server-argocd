@@ -1,0 +1,99 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: immich
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "5"
+spec:
+  project: default
+  source:
+    chart: immich
+    repoURL: https://ghcr.io/immich-app/immich-charts/immich
+    targetRevision: 0.9.3
+    helm:
+      releaseName: immich
+      values: |
+        immich:
+          metrics:
+            enabled: true
+          persistence:
+            library:
+              existingClaim: immich-library-pvc
+        postgresql:
+          global:
+            postgresql:
+              auth:
+                existingSecret: immich-db-secret
+        redis:
+          enabled: true
+          architecture: standalone
+          auth:
+            enabled: false
+        server:
+          enabled: true
+          image:
+            repository: ghcr.io/immich-app/immich-server
+            pullPolicy: IfNotPresent
+          ingress:
+            main:
+              enabled: true
+              annotations:
+                # proxy-body-size is set to 0 to remove the body limit on file uploads
+                nginx.ingress.kubernetes.io/proxy-body-size: "0"
+                kubernetes.io/ingress.class: "nginx"
+                nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+                cert-manager.io/cluster-issuer: "home-issuer"  
+                nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
+              hosts:
+                - host: immich.rafa.local
+                  paths:
+                    - path: "/"
+              tls:
+                - hosts:
+                    - immich.rafa.local
+                  secretName: immich-tls   
+        machine-learning:
+          enabled: true
+          image:
+            repository: ghcr.io/immich-app/immich-machine-learning
+            pullPolicy: IfNotPresent
+          env:
+            TRANSFORMERS_CACHE: /cache
+          persistence:
+            cache:
+              enabled: true
+              size: 3Gi
+              type: pvc
+              accessMode: ReadWriteOnce
+              storageClass: longhorn
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: immich
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+    - CreateNamespace=true
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: immich-config
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "4"
+spec:
+  project: default
+  source:
+    repoURL: git@github.com:racela/home-server-argocd.git
+    path: apps/config/immich
+    targetRevision: HEAD
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: immich
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
