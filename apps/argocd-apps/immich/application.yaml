@@ -69,8 +69,8 @@ spec:
             cache:
               enabled: true
               size: 3Gi
-              type: pvc
-              accessMode: ReadWriteOnce
+              type: emptyDir
+              accessMode: ReadWriteMany
               storageClass: longhorn
   destination:
     server: https://kubernetes.default.svc
