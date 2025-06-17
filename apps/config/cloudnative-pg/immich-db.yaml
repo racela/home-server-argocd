@@ -6,7 +6,7 @@ metadata:
 spec:
   # target the Cluster created above
   cluster:
-    name: immich-cluster
+    name: db-cluster
 
   # logical database name & owner
   name: immich
