@@ -1,5 +1,1 @@
-home-ca-secret.yaml
-plex-claim-secret.yaml
-grafana-admin-secret.yaml
-tailscale-oauth-secret.yaml
-renovate-secret.yaml
+*-secret.yaml

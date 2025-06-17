@@ -1,0 +1,27 @@
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: db-cluster
+  namespace: cloudnative-pg
+spec:
+  imageName: ghcr.io/tensorchord/cloudnative-vectorchord:16-0.3.0
+  instances: 1
+
+  superuserSecret:
+    name: cluster-superuser-secret
+
+  managed:
+    roles:
+      - name: immich
+        ensure: present
+        superuser: true
+        login: true
+        passwordSecret:
+          name: immich-db-user-secret
+
+  storage:
+    size: 5Gi
+    storageClass: longhorn
+
+  monitoring:
+    enablePodMonitor: true
