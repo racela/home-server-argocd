@@ -2,6 +2,7 @@ apiVersion: v1
 kind: PersistentVolume
 metadata:
   name: immich-library-pv
+  namespace: immich
 spec:
   accessModes:
   - ReadWriteMany

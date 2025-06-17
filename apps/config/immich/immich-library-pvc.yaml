@@ -2,7 +2,7 @@ apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: immich-library-pvc 
-  namespace: plex              
+  namespace: immich              
 spec:
   volumeName: immich-library-pv
   storageClassName: nfs-csi
