@@ -30,10 +30,11 @@ spec:
           architecture: standalone
           auth:
             enabled: false
-          persistence:
-            enabled: true
-            size: 2Gi
-            storageClass: longhorn
+          master:
+            persistence:
+              enabled: true
+              size: 2Gi
+              storageClass: longhorn
         server:
           enabled: true
           image:
