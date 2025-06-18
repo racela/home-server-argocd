@@ -24,6 +24,7 @@ spec:
           global:
             postgresql:
               auth:
+                database: db-cluster-rw.svc.cluster.local:5432
                 existingSecret: immich-db-secret
         redis:
           enabled: true
@@ -71,7 +72,7 @@ spec:
               size: 3Gi
               type: emptyDir
               accessMode: ReadWriteMany
-              storageClass: longhorn
+              # storageClass: longhorn
   destination:
     server: https://kubernetes.default.svc
     namespace: immich
