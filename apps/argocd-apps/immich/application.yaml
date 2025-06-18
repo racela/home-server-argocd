@@ -26,6 +26,9 @@ spec:
                 key: password
           IMMICH_MACHINE_LEARNING_URL: '{{ printf "http://%s-machine-learning:3003" .Release.Name }}'
 
+        image:
+          tag: v1.134.0
+
         immich:
           metrics:
             enabled: true
