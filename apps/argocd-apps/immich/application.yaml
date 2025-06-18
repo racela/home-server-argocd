@@ -14,18 +14,20 @@ spec:
     helm:
       releaseName: immich
       values: |
+        env:
+          REDIS_HOSTNAME: '{{ printf "%s-redis-master" .Release.Name }}'
+          DB_HOSTNAME: "db-cluster-rw.svc.cluster.local"
+          DB_USERNAME: "{{ .Values.postgresql.global.postgresql.auth.username }}"
+          DB_DATABASE_NAME: "{{ .Values.postgresql.global.postgresql.auth.database }}"
+          DB_PASSWORD: "{{ .Values.postgresql.global.postgresql.auth.password }}"
+          IMMICH_MACHINE_LEARNING_URL: '{{ printf "http://%s-machine-learning:3003" .Release.Name }}'
+
         immich:
           metrics:
             enabled: true
           persistence:
             library:
               existingClaim: immich-library-pvc
-        postgresql:
-          global:
-            postgresql:
-              auth:
-                database: db-cluster-rw.svc.cluster.local:5432
-                existingSecret: immich-db-secret
         redis:
           enabled: true
           architecture: standalone
