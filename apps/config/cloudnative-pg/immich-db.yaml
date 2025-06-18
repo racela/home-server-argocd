@@ -19,6 +19,8 @@ spec:
     - name: vchord
       ensure: present
       version: 0.3.0
+    - name: cube
+      ensure: present
     - name: earthdistance
       ensure: present
 
