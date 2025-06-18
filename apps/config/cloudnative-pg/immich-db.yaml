@@ -14,11 +14,11 @@ spec:
 
   # ensure all Immich‑required extensions are present
   extensions:
-    # - name: vector
-    #   ensure: present
-    # - name: vchord
-    #   ensure: present
-      # version: 0.3.0
+    - name: vector
+      ensure: present
+    - name: vchord
+      ensure: present
+      version: 0.3.0
     - name: cube
       ensure: present
     - name: earthdistance
