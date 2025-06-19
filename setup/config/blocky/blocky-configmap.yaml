@@ -27,3 +27,4 @@ data:
       mapping:
         # ingress-nginx LoadBalancer IP
         rafa.local: 192.168.1.240
+        rafa.home: 192.168.1.240

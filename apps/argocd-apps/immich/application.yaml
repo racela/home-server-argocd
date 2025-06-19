@@ -67,12 +67,12 @@ spec:
                 cert-manager.io/cluster-issuer: "home-issuer"  
                 nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
               hosts:
-                - host: immich.rafa.local
+                - host: immich.rafa.home
                   paths:
                     - path: "/"
               tls:
                 - hosts:
-                    - immich.rafa.local
+                    - immich.rafa.home
                   secretName: immich-tls   
         machine-learning:
           enabled: true
