@@ -97,6 +97,13 @@ spec:
               conditions:
                 - "[STATUS] == 200"
 
+            - name: Immich
+              group: media
+              url: http://immich-server.immich.svc.cluster.local:2283/api/server/ping
+              interval: 1m
+              conditions:
+                - "[STATUS] == 200"
+
           resources:
            limits:
              memory: 256Mi
