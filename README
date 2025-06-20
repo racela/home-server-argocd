@@ -4,7 +4,7 @@ To do:
 - Setup monitoring, alerts for down services
 - Convert all secrets to sealed secrets
 - Figure out how to bootstrap cluster
-  - Secrets are needed for plex, grafana, cert-manager
+  - Secrets are needed for plex, grafana, cert-manager, cloudnative-pg, immich, tailscale
 - Figure out how to create namespaces with necessary labels since some of them dont work cause of talos
 - Terraform for proxmox and talos
 - Buy UPS and setup shutdown process
