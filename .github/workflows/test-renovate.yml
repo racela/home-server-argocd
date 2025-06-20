@@ -1,0 +1,75 @@
+name: Validate ArgoCD Application
+
+on:
+  pull_request:
+    paths:
+      - 'apps/argocd-apps/**.yaml'
+      - 'setup/argocd-apps/**.yaml'
+  merge_group:
+
+jobs:
+  validate-argocd-app:
+    name: Validate Changed ArgoCD App
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v3
+
+      - name: Install yq
+        uses: mikefarah/yq@v4
+
+      - name: Fetch base branch
+        run: |
+          git fetch origin ${{ github.base_ref }} --depth=1
+
+      - name: Identify changed Application manifest
+        id: changed_file
+        run: |
+          FILE=$(git diff --name-only origin/${{ github.base_ref }} | \
+                 grep -E '^(apps|setup)/argocd-apps/.*\.ya?ml$' | head -n 1)
+          if [ -z "$FILE" ]; then
+            echo "No application file changed. Skipping."
+            exit 1
+          fi
+          echo "app_file=$FILE" >> $GITHUB_OUTPUT
+
+      - name: Extract chart info
+        id: chart
+        run: |
+          file="${{ steps.changed_file.outputs.app_file }}"
+          echo "🔍 Parsing $file"
+          chart=$(yq e 'select(di == 0) | .spec.source.chart' "$file")
+          repo=$(yq e 'select(di == 0) | .spec.source.repoURL' "$file")
+          version=$(yq e 'select(di == 0) | .spec.source.targetRevision' "$file")
+          # Pull out helm.values block to a tmp file
+          yq e 'select(di == 0) | .spec.source.helm.values' "$file" > chart.values.yaml
+          echo "::set-output name=chart::$chart"
+          echo "::set-output name=repo::$repo"
+          echo "::set-output name=version::$version"
+
+      - name: Add Helm repo
+        run: |
+          helm repo add testrepo "${{ steps.chart.outputs.repo }}"
+          helm repo update
+
+      - name: Pull chart
+        run: |
+          helm pull testrepo/${{ steps.chart.outputs.chart }} \
+            --version "${{ steps.chart.outputs.version }}" \
+            --untar --untardir pulled-chart
+
+      - name: Lint chart
+        run: |
+          helm lint pulled-chart/${{ steps.chart.outputs.chart }} --strict --values chart.values.yaml
+
+      - name: Render templates
+        run: |
+          set -o pipefail
+          helm template smoke-test pulled-chart/${{ steps.chart.outputs.chart }} \
+            --values chart.values.yaml 2>&1 \
+            | tee render.log \
+            | grep -i warning && exit 1 || true
