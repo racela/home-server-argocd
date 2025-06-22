@@ -46,6 +46,7 @@ spec:
         service:
           type: LoadBalancer
           port: 32400
+          externalTrafficPolicy: Local
         extraVolumes:
         - name: nfs-movies
           persistentVolumeClaim:

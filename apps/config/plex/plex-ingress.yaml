@@ -12,6 +12,9 @@ metadata:
     cert-manager.io/cluster-issuer: "home-issuer"  
     # Tell nginx to speak HTTPS to the service
     nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
+    # Show real IP
+    nginx.ingress.kubernetes.io/proxy-real-ip-cidr: 0.0.0.0/0
+    nginx.ingress.kubernetes.io/use-forwarded-headers: "true"
 spec:
   tls:
     - hosts:
