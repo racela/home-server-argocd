@@ -1,0 +1,30 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: deluge-ingress
+  namespace: plex
+  annotations:
+    # Use the nginx ingress controller
+    kubernetes.io/ingress.class: "nginx"
+    # Redirect HTTP → HTTPS
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    # cert-manager will use this ClusterIssuer to issue certificates
+    cert-manager.io/cluster-issuer: "home-issuer"  
+    # Tell nginx to speak HTTP to the service
+    nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
+spec:
+  tls:
+    - hosts:
+        - deluge.rafa.home
+      secretName: deluge-tls            # cert-manager will create this Secret
+  rules:
+    - host: deluge.rafa.home
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: deluge   
+                port:
+                  number: 8112
