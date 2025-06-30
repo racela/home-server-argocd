@@ -15,11 +15,11 @@ spec:
       releaseName: gatus
       values: |
         env:
-        - name: DISCORD_WEBHOOK_URL
-          valueFrom:
-            secretKeyRef:
-              name: discord-webhook
-              key: DISCORD_WEBHOOK_URL
+          DISCORD_WEBHOOK_URL:
+            valueFrom:
+              secretKeyRef:
+                name: discord-webhook
+                key: DISCORD_WEBHOOK_URL
         ingress:
           enabled: true
           annotations:
