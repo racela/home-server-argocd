@@ -14,6 +14,12 @@ spec:
     helm:
       releaseName: gatus
       values: |
+        env:
+        - name: DISCORD_WEBHOOK_URL
+          valueFrom:
+            secretKeyRef:
+              name: discord-webhook
+              key: DISCORD_WEBHOOK_URL
         ingress:
           enabled: true
           annotations:
@@ -31,6 +37,9 @@ spec:
           pathType: Prefix
         config:
           metrics: true
+          alerting:
+            discord:
+              webhook-url: "${DISCORD_WEBHOOK_URL}"
           endpoints:
             - name: Plex
               group: media
@@ -38,6 +47,10 @@ spec:
               interval: 1m
               conditions:
                 - "[STATUS] == 200"
+              alerts:
+              - type: discord
+                description: "healthcheck failed"
+                send-on-resolved: true
 
             - name: Home Assistant
               group: automation
@@ -45,6 +58,10 @@ spec:
               interval: 1m
               conditions:
                 - "[STATUS] == 200"
+              alerts:
+              - type: discord
+                description: "healthcheck failed"
+                send-on-resolved: true
 
             - name: Longhorn UI
               group: storage
@@ -52,6 +69,10 @@ spec:
               interval: 1m
               conditions:
                 - "[STATUS] == 200"
+              alerts:
+              - type: discord
+                description: "healthcheck failed"
+                send-on-resolved: true
 
             - name: Deluge Web UI
               group: media
@@ -59,6 +80,10 @@ spec:
               interval: 1m
               conditions:
                 - "[STATUS] == 200"
+              alerts:
+              - type: discord
+                description: "healthcheck failed"
+                send-on-resolved: true
 
             - name: Grafana
               group: observability
@@ -66,6 +91,10 @@ spec:
               interval: 1m
               conditions:
                 - "[STATUS] == 200"
+              alerts:
+              - type: discord
+                description: "healthcheck failed"
+                send-on-resolved: true
 
             - name: Prometheus
               group: observability
@@ -73,6 +102,10 @@ spec:
               interval: 1m
               conditions:
                 - "[STATUS] == 200"
+              alerts:
+              - type: discord
+                description: "healthcheck failed"
+                send-on-resolved: true
 
             - name: ArgoCD
               group: gitops
@@ -82,6 +115,10 @@ spec:
                 insecure: true
               conditions:
                 - "[STATUS] == 200"
+              alerts:
+              - type: discord
+                description: "healthcheck failed"
+                send-on-resolved: true
 
             - name: Blocky
               group: dns
@@ -89,6 +126,10 @@ spec:
               interval: 1m
               conditions:
                 - "[STATUS] == 200"
+              alerts:
+              - type: discord
+                description: "healthcheck failed"
+                send-on-resolved: true
 
             - name: Otterwiki
               group: wiki
@@ -96,6 +137,10 @@ spec:
               interval: 1m
               conditions:
                 - "[STATUS] == 200"
+              alerts:
+              - type: discord
+                description: "healthcheck failed"
+                send-on-resolved: true
 
             - name: Immich
               group: media
@@ -103,6 +148,10 @@ spec:
               interval: 1m
               conditions:
                 - "[STATUS] == 200"
+              alerts:
+              - type: discord
+                description: "healthcheck failed"
+                send-on-resolved: true
 
           resources:
            limits:
