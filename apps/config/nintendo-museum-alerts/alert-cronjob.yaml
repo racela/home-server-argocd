@@ -13,7 +13,7 @@ spec:
           restartPolicy: Never  # once the container exits, don’t restart it
           containers:
             - name: nintendo-museum-checker
-              image: rafaracela/museum-alerts:1.0.0
+              image: rafaracela/museum-alerts:1.1.0
               env:
                 - name: DISCORD_WEBHOOK_URL
                   valueFrom:
