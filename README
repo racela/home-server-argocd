@@ -1,4 +1,5 @@
 To do:
+- Add gatus discord secret and cronjob to git
 - Install sonarr, radarr
 - Make sure static IPs for nginx,  plex
 - Setup monitoring, alerts for down services

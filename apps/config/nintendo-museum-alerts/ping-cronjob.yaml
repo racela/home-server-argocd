@@ -1,0 +1,22 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: nintendo-museum-alerts
+  namespace: alerts
+spec:
+  schedule: "* * * * *"   # every minute
+  jobTemplate:
+    spec:
+      backoffLimit: 0
+      template:
+        spec:
+          restartPolicy: Never  # once the container exits, don’t restart it
+          containers:
+            - name: nintendo-museum-checker
+              image: rafaracela/museum-alerts:1.0.0
+              env:
+                - name: DISCORD_WEBHOOK_URL
+                  valueFrom:
+                    secretKeyRef:
+                      name: discord-webhook-secret
+                      key: url
