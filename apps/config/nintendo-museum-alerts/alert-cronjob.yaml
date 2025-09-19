@@ -14,6 +14,12 @@ spec:
           containers:
             - name: nintendo-museum-checker
               image: rafaracela/museum-alerts:1.1.0
+              command: ["/bin/sh", "-c"]
+              args:
+                - |
+                  python /app/app.py
+                  sleep 30
+                  python /app/app.py
               env:
                 - name: DISCORD_WEBHOOK_URL
                   valueFrom:
