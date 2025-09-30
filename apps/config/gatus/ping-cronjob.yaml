@@ -1,0 +1,32 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: url-pinger
+  namespace: gatus
+spec:
+  schedule: "*/30 * * * *"   # every 30 minutes
+  concurrencyPolicy: Forbid  # don’t run multiple jobs in parallel
+  jobTemplate:
+    spec:
+      backoffLimit: 1        # don’t retry more than once on failure
+      template:
+        spec:
+          restartPolicy: Never
+          containers:
+            - name: ping
+              image: curlimages/curl:8.4.0
+              command:
+                - "curl"
+              args:
+                - "-s"                       # silent
+                - "-o"
+                - "/dev/null"                # discard output
+                - "-w"
+                - "%{http_code}\n"           # print HTTP status code
+                - "$(TARGET_URL)"            # ← injected from secret
+              env:
+                - name: TARGET_URL
+                  valueFrom:
+                    secretKeyRef:
+                      name: gatus-cronjob-secret       # Secret name
+                      key: TARGET_URL        # Key inside the secret
