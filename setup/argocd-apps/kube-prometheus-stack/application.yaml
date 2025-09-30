@@ -31,14 +31,7 @@ spec:
               limits:
                 memory: 700Mi
                 cpu: 500m
-            storageSpec:
-              volumeClaimTemplate:
-                spec:
-                  storageClassName: longhorn
-                  accessModes: ["ReadWriteOnce"]
-                  resources:
-                    requests:
-                      storage: 5Gi
+            storageSpec: {}
             enableAdminAPI: false
 
         # Lighten Grafana resource usage
