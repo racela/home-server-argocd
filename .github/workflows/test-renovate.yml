@@ -70,6 +70,17 @@ jobs:
         run: |
           set -o pipefail
           helm template smoke-test pulled-chart/${{ steps.chart.outputs.chart }} \
-            --values chart.values.yaml 2>&1 \
-            | tee render.log \
-            | grep -i warning && exit 1 || true
+            --values chart.values.yaml --debug 2>&1 | tee render.log
+
+          echo "🔍 Checking for warnings..."
+          if grep -i "warning" render.log; then
+            echo "::error::Helm template produced warnings (see render.log)"
+            exit 1
+          fi
+
+      - name: Upload render logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: helm-render-logs
+          path: render.log
