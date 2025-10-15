@@ -22,6 +22,10 @@ spec:
           image:
             tag: v3.0.4           # pin to a specific version
 
+        configs:
+          cm:
+            exec.enabled: true
+
         server:
           replicaCount: 1         # Single replica for non-HA
           service:
