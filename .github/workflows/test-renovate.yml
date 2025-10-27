@@ -80,7 +80,7 @@ jobs:
 
       - name: Upload render logs
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: helm-render-logs
           path: render.log
