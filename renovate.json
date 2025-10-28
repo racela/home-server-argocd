@@ -9,7 +9,8 @@
   "packageRules": [
     {
       "matchManagers": ["argocd"],
-      "prTitle": "{{depName}} {{currentVersion}} -> {{newVersion}}"
+      "commitMessageTopic": "{{depName}}",
+      "commitMessageExtra": "{{currentVersion}} -> {{newVersion}}"
     },
     {
       "matchUpdateTypes": ["patch"],
