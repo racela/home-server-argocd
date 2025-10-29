@@ -10,24 +10,16 @@ spec:
   source:
     chart: argo-cd
     repoURL: https://argoproj.github.io/argo-helm
-    targetRevision: 8.1.1
+    targetRevision: 9.0.5
     helm:
       releaseName: argocd
       values: |
-        # Namespace to deploy into
-        namespace: argocd
-
-        # Server configuration
-        global:
-          image:
-            tag: v3.0.4           # pin to a specific version
-
         configs:
           cm:
             exec.enabled: true
 
         server:
-          replicaCount: 1         # Single replica for non-HA
+          replicas: 1         # Single replica for non-HA
           service:
             type: ClusterIP
           resources:
@@ -39,7 +31,7 @@ spec:
               memory: 512Mi
 
         repoServer:
-          replicaCount: 1         # Single replica
+          replicas: 1         # Single replica
           resources:
             requests:
               cpu: 150m
@@ -49,7 +41,7 @@ spec:
               memory: 400Mi
 
         controller:
-          replicaCount: 1         # Single replica
+          replicas: 1         # Single replica
           resources:
             requests:
               cpu: 200m
@@ -60,7 +52,7 @@ spec:
 
         applicationSet:
           enabled: true
-          replicaCount: 1
+          replicas: 1
           resources:
             requests:
               cpu: 150m
@@ -71,7 +63,7 @@ spec:
 
         notifications:
           enabled: true
-          replicaCount: 1
+          replicas: 1
           resources:
             requests:
               cpu: 100m
