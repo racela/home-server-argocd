@@ -21,7 +21,7 @@ spec:
                 image:
                   tag: v2.0.0
                 env:
-                  REDIS_HOSTNAME: '{{ printf "%s-redis-master" .Release.Name }}'
+                  REDIS_HOSTNAME: '{{ printf "%s-valkey" .Release.Name }}'
                   DB_HOSTNAME: "db-cluster-rw.cloudnative-pg.svc.cluster.local"
                   DB_USERNAME: "immich"
                   DB_DATABASE_NAME: "immich"
