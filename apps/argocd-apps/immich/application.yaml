@@ -10,24 +10,27 @@ spec:
   source:
     chart: immich
     repoURL: https://immich-app.github.io/immich-charts
-    targetRevision: 0.9.3
+    targetRevision: 0.10.1
     helm:
       releaseName: immich
       values: |
-        env:
-          REDIS_HOSTNAME: '{{ printf "%s-redis-master" .Release.Name }}'
-          DB_HOSTNAME: "db-cluster-rw.cloudnative-pg.svc.cluster.local"
-          DB_USERNAME: "{{ .Values.postgresql.global.postgresql.auth.username }}"
-          DB_DATABASE_NAME: "{{ .Values.postgresql.global.postgresql.auth.database }}"
-          DB_PASSWORD:
-            valueFrom:
-              secretKeyRef:
-                name: immich-db-secret
-                key: password
-          IMMICH_MACHINE_LEARNING_URL: '{{ printf "http://%s-machine-learning:3003" .Release.Name }}'
-
-        image:
-          tag: v2.0.0
+        controllers:
+          main:
+            containers:
+              main:
+                image:
+                  tag: v2.0.0
+                env:
+                  REDIS_HOSTNAME: '{{ printf "%s-redis-master" .Release.Name }}'
+                  DB_HOSTNAME: "db-cluster-rw.cloudnative-pg.svc.cluster.local"
+                  DB_USERNAME: "immich"
+                  DB_DATABASE_NAME: "immich"
+                  DB_PASSWORD:
+                    valueFrom:
+                      secretKeyRef:
+                        name: immich-db-secret
+                        key: password
+                  IMMICH_MACHINE_LEARNING_URL: '{{ printf "http://%s-machine-learning:3003" .Release.Name }}'
 
         immich:
           metrics:
@@ -35,27 +38,22 @@ spec:
           persistence:
             library:
               existingClaim: immich-library-pvc
-        postgresql:
-          global:
-            postgresql:
-              auth:
-                username: immich
-                database: immich
-        redis:
+        valkey:
           enabled: true
-          architecture: standalone
-          auth:
-            enabled: false
-          master:
-            persistence:
+          persistence:
+            data:
               enabled: true
               size: 2Gi
               storageClass: longhorn
         server:
           enabled: true
-          image:
-            repository: ghcr.io/immich-app/immich-server
-            pullPolicy: IfNotPresent
+          controllers:
+            main:
+              containers:
+                main:
+                  image:
+                    repository: ghcr.io/immich-app/immich-server
+                    pullPolicy: IfNotPresent
           ingress:
             main:
               enabled: true
@@ -70,17 +68,25 @@ spec:
                 - host: immich.rafa.home
                   paths:
                     - path: "/"
+                      service:
+                        identifier: main
               tls:
                 - hosts:
                     - immich.rafa.home
                   secretName: immich-tls   
         machine-learning:
           enabled: true
-          image:
-            repository: ghcr.io/immich-app/immich-machine-learning
-            pullPolicy: IfNotPresent
-          env:
-            TRANSFORMERS_CACHE: /cache
+          controllers:
+            main:
+              containers:
+                main:
+                  image:
+                    repository: ghcr.io/immich-app/immich-machine-learning
+                    pullPolicy: IfNotPresent
+                  env:
+                    TRANSFORMERS_CACHE: /cache
+                    HF_XET_CACHE: /cache/huggingface-xet
+                    MPLCONFIGDIR: /cache/matplotlib-config
           persistence:
             cache:
               enabled: true
