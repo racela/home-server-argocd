@@ -55,8 +55,17 @@ jobs:
           echo "repo=$repo" >> $GITHUB_OUTPUT
           echo "version=$version" >> $GITHUB_OUTPUT
 
-      - name: Prepare ct config
+      - name: Pull chart
         run: |
+          helm repo add testrepo "${{ steps.chart.outputs.repo }}"
+          helm repo update
+          helm pull testrepo/${{ steps.chart.outputs.chart }} \
+          --version "${{ steps.chart.outputs.version }}" \
+          --untar --untardir charts
+
+      - name: Prepare ct config dynamically
+        run: |
+          # Base config for ct
           cat <<EOF > ct-config.yaml
           chart-dirs:
             - charts
@@ -66,26 +75,35 @@ jobs:
           debug: true
           EOF
 
-      - name: Pull chart
-        run: |
-          helm repo add testrepo "${{ steps.chart.outputs.repo }}"
-          helm repo update
-          helm pull testrepo/${{ steps.chart.outputs.chart }} \
-            --version "${{ steps.chart.outputs.version }}" \
-            --untar --untardir pulled-chart
+          # Detect dependencies from Chart.yaml
+          chart_path="charts/${{ steps.chart.outputs.chart }}/Chart.yaml"
+
+          if [ -f "$chart_path" ]; then
+            echo "🔍 Checking for dependencies in $chart_path..."
+            yq e '.dependencies[].repository' "$chart_path" | grep -v null | while read -r repo; do
+              name=$(basename "$repo" | tr '.-' '_')  # simple safe alias
+              echo "Adding repo alias $name -> $repo"
+              echo "  - $name=$repo" >> ct-config.yaml
+            done
+          else
+            echo "⚠️ No Chart.yaml found at $chart_path"
+          fi
+
+          echo "✅ Final ct-config.yaml:"
+          cat ct-config.yaml
 
       - name: Lint chart
         run: |
           ct lint \
             --config ct-config.yaml \
-            --charts "pulled-chart/${{ steps.chart.outputs.chart }}" \
+            --charts "charts/${{ steps.chart.outputs.chart }}" \
             --helm-lint-extra-args '--strict' \
 
       - name: Install chart using ct
         run: |
           ct install \
             --config ct-config.yaml \
-            --charts "pulled-chart/${{ steps.chart.outputs.chart }}" \
+            --charts "charts/${{ steps.chart.outputs.chart }}" \
             --helm-extra-args '--timeout 10m' \
             --namespace smoke-test \
 
