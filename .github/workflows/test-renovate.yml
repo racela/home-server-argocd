@@ -45,42 +45,55 @@ jobs:
           chart=$(yq e 'select(di == 0) | .spec.source.chart' "$file")
           repo=$(yq e 'select(di == 0) | .spec.source.repoURL' "$file")
           version=$(yq e 'select(di == 0) | .spec.source.targetRevision' "$file")
-          # Pull out helm.values block to a tmp file
-          yq e 'select(di == 0) | .spec.source.helm.values' "$file" > chart.values.yaml
-          echo "::set-output name=chart::$chart"
-          echo "::set-output name=repo::$repo"
-          echo "::set-output name=version::$version"
 
-      - name: Add Helm repo
+          # Add values of updated chart to its own file
+          mkdir -p charts
+          yq e 'select(di == 0) | .spec.source.helm.values' "$file" > charts/values.yaml
+
+          echo "chart=$chart" >> $GITHUB_OUTPUT
+          echo "repo=$repo" >> $GITHUB_OUTPUT
+          echo "version=$version" >> $GITHUB_OUTPUT
+
+      - name: Prepare ct config
         run: |
-          helm repo add testrepo "${{ steps.chart.outputs.repo }}"
-          helm repo update
+          cat <<EOF > ct-config.yaml
+          chart-dirs:
+            - charts
+          chart-repos:
+            - testrepo=${{ steps.chart.outputs.repo }}
+          check-version-increment: false
+          debug: true
+          EOF
 
       - name: Pull chart
         run: |
+          helm repo add testrepo "${{ steps.chart.outputs.repo }}"
+          helm repo update
           helm pull testrepo/${{ steps.chart.outputs.chart }} \
             --version "${{ steps.chart.outputs.version }}" \
             --untar --untardir pulled-chart
 
       - name: Lint chart
         run: |
-          helm lint pulled-chart/${{ steps.chart.outputs.chart }} --strict --values chart.values.yaml
+            --config ct-config.yaml \
+            --charts "pulled-chart/${{ steps.chart.outputs.chart }}" \
+            --helm-lint-extra-args '--strict' \
 
-      - name: Render templates
+      - name: Install chart using ct
         run: |
-          set -o pipefail
-          helm template smoke-test pulled-chart/${{ steps.chart.outputs.chart }} \
-            --values chart.values.yaml --debug 2>&1 | tee render.log
+          ct install \
+            --config ct-config.yaml \
+            --charts "pulled-chart/${{ steps.chart.outputs.chart }}" \
+            --helm-extra-args '--timeout 10m' \
+            --namespace smoke-test \
 
-          echo "🔍 Checking for warnings..."
-          if grep -i "warning" render.log; then
-            echo "::error::Helm template produced warnings (see render.log)"
-            exit 1
-          fi
-
-      - name: Upload render logs
+      - name: Upload ct logs
         if: always()
         uses: actions/upload-artifact@v5
         with:
-          name: helm-render-logs
-          path: render.log
+          name: ct-logs
+          path: |
+            .ct/lint.log
+            .ct/install.log
+          if-no-files-found: ignore
+
