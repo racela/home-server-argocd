@@ -75,15 +75,16 @@ jobs:
           debug: true
           EOF
 
-          # Detect dependencies from Chart.yaml
           chart_path="charts/${{ steps.chart.outputs.chart }}/Chart.yaml"
 
           if [ -f "$chart_path" ]; then
-            echo "🔍 Checking for dependencies in $chart_path..."
-            yq e '.dependencies[].repository' "$chart_path" | grep -v null | while read -r repo; do
-              name=$(basename "$repo" | tr '.-' '_')  # simple safe alias
+            echo "🔍 Checking dependencies in $chart_path..."
+            deps=$(yq e '.dependencies[].repository' "$chart_path" | grep -v null || true)
+
+            for repo in $deps; do
+              name=$(basename "$repo" | tr '.-' '_')
               echo "Adding repo alias $name -> $repo"
-              echo "  - $name=$repo" >> ct-config.yaml
+              yq -i ".chart-repos += [\"$name=$repo\"]" ct-config.yaml
             done
           else
             echo "⚠️ No Chart.yaml found at $chart_path"
