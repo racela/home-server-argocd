@@ -81,7 +81,6 @@ jobs:
             echo "🔍 Checking dependencies in $chart_path..."
             deps=$(yq eval -o=json '[.dependencies[] | "\(.name)=\(.repository)"]' "$chart_path")
             echo "dependencies found: $deps"
-            yq -i ".chart-repos += $deps" ct-config.yaml
 
             # Remove blank urls
             for repo in $(echo $deps | yq -e '.[]' -); do
@@ -95,6 +94,7 @@ jobs:
             done
 
             echo "final chart dependencies: $deps"
+            yq -i ".chart-repos += $deps" ct-config.yaml
 
           else
             echo "⚠️ No Chart.yaml found at $chart_path"
