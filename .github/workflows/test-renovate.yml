@@ -108,7 +108,6 @@ jobs:
           ct lint \
             --config ct-config.yaml \
             --charts "charts/${{ steps.chart.outputs.chart }}" \
-            --helm-lint-extra-args \
 
       - name: Install chart using ct
         run: |
