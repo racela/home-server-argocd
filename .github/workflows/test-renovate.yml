@@ -109,6 +109,9 @@ jobs:
             --config ct-config.yaml \
             --charts "charts/${{ steps.chart.outputs.chart }}" \
 
+      - name: Create kind cluster
+        uses: helm/kind-action@v1.12.0
+
       - name: Install chart using ct
         run: |
           ct install \
