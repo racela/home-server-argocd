@@ -79,13 +79,8 @@ jobs:
 
           if [ -f "$chart_path" ]; then
             echo "🔍 Checking dependencies in $chart_path..."
-            deps=$(yq e '.dependencies[].repository' "$chart_path" | grep -v null || true)
-
-            for repo in $deps; do
-              name=$(basename "$repo" | tr '.-' '_')
-              echo "Adding repo alias $name -> $repo"
-              yq -i ".chart-repos += [\"$name=$repo\"]" ct-config.yaml
-            done
+            deps=$(yq eval -o=json '[.dependencies[] | "\(.name)=\(.repository)"]' "$chart_path")
+            yq -i ".chart-repos += $deps" ct-config.yaml
           else
             echo "⚠️ No Chart.yaml found at $chart_path"
           fi
