@@ -53,7 +53,7 @@ jobs:
           values=$(yq e 'select(di == 0) | .spec.source.helm.values' "$file")
           if [[ "$values" != "null" ]]; then
             values > charts/values.yaml
-          done
+          fi
 
           echo "chart=$chart" >> $GITHUB_OUTPUT
           echo "repo=$repo" >> $GITHUB_OUTPUT
