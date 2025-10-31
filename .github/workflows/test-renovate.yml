@@ -117,8 +117,7 @@ jobs:
           ct install \
             --config ct-config.yaml \
             --charts "charts/${{ steps.chart.outputs.chart }}" \
-            --helm-extra-args '--timeout 10m' \
-            --namespace smoke-test \
+            --helm-extra-args '--timeout 10m'
 
       - name: Upload ct logs
         if: always()
@@ -129,4 +128,3 @@ jobs:
             .ct/lint.log
             .ct/install.log
           if-no-files-found: ignore
-
