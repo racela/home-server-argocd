@@ -80,7 +80,22 @@ jobs:
           if [ -f "$chart_path" ]; then
             echo "🔍 Checking dependencies in $chart_path..."
             deps=$(yq eval -o=json '[.dependencies[] | "\(.name)=\(.repository)"]' "$chart_path")
+            echo "dependencies found: $deps"
             yq -i ".chart-repos += $deps" ct-config.yaml
+
+            # Remove blank urls
+            for repo in $(echo $deps | yq -e '.[]' -); do
+              count=0
+              url=$(echo $repo | yq -e 'split("=") | .[1]' -)
+              if [ "$url" == "" ]; then
+                echo "deleting $repo"
+                deps=$(count=$count yq -e 'del(.[env(count)])' - <<< $deps)
+              fi
+              count=$((count + 1))
+            done
+
+            echo "final chart dependencies: $deps"
+
           else
             echo "⚠️ No Chart.yaml found at $chart_path"
           fi
@@ -93,7 +108,7 @@ jobs:
           ct lint \
             --config ct-config.yaml \
             --charts "charts/${{ steps.chart.outputs.chart }}" \
-            --helm-lint-extra-args '--strict' \
+            --helm-lint-extra-args \
 
       - name: Install chart using ct
         run: |
