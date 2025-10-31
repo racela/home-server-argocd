@@ -47,9 +47,13 @@ jobs:
           repo=$(yq e 'select(di == 0) | .spec.source.repoURL' "$file")
           version=$(yq e 'select(di == 0) | .spec.source.targetRevision' "$file")
 
-          # Add values of updated chart to its own file
           mkdir -p charts
-          yq e 'select(di == 0) | .spec.source.helm.values' "$file" > charts/values.yaml
+
+          # If there are values, add to its own file
+          values=$(yq e 'select(di == 0) | .spec.source.helm.values' "$file")
+          if [[ "$values" != "null" ]]; then
+            values > charts/values.yaml
+          done
 
           echo "chart=$chart" >> $GITHUB_OUTPUT
           echo "repo=$repo" >> $GITHUB_OUTPUT
