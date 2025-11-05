@@ -25,7 +25,7 @@ jobs:
         uses: mikefarah/yq@v4
 
       - name: Install chart-testing (ct)
-        uses: helm/chart-testing-action@v2.7.0
+        uses: helm/chart-testing-action@v2.8.0
 
       - name: Identify changed Application manifest
         id: changed_file
