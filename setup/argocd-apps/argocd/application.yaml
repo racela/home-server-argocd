@@ -96,11 +96,6 @@ spec:
           scopes:
             - "repo"
 
-        metrics:
-          enabled: true
-          serviceMonitor:
-            enabled: true    # if using Prometheus Operator
-
         # Extra args for all components (e.g., log level)
         extraArgs:
           - --loglevel=info
