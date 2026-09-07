@@ -10,7 +10,7 @@ spec:
   source:
     chart: plex-media-server
     repoURL: https://raw.githubusercontent.com/plexinc/pms-docker/gh-pages
-    targetRevision: 1.6.0
+    targetRevision: 1.9.0
     helm:
       releaseName: plex
       values: |
