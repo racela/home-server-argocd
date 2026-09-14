@@ -192,14 +192,19 @@ jobs:
           echo "✅ Chart renders cleanly with the values this repo actually uses."
 
       # Charts here need something the ephemeral kind cluster genuinely can't
-      # provide (a real external credential/secret) to ever reach Ready.
-      # `helm template` above still catches schema/rendering breakage for
-      # them; only the live install/upgrade check is skipped.
+      # provide (a real external credential, or host kernel support not
+      # available on a GitHub-hosted runner) to ever reach Ready. `helm
+      # template` above still catches schema/rendering breakage for them;
+      # only the live install/upgrade check is skipped.
+      #   - tailscale-operator: needs a real Tailscale OAuth secret.
+      #   - longhorn: needs open-iscsi/iscsid on the host node, which kind
+      #     runners don't provide; longhorn-manager crash-loops without it
+      #     regardless of chart version or values.
       - name: Determine if live install is possible
         if: steps.chart.outputs.chart != ''
         id: installable
         run: |
-          skip_list=("tailscale-operator")
+          skip_list=("tailscale-operator" "longhorn")
           chart="${{ steps.chart.outputs.chart }}"
           installable=true
           for c in "${skip_list[@]}"; do
@@ -246,6 +251,15 @@ jobs:
           kubectl get events -n "$ns" --sort-by=.lastTimestamp || true
           echo "=== Describe pods ==="
           kubectl describe pods -n "$ns" || true
+          echo "=== Container logs (current + previous, non-ready pods) ==="
+          for pod in $(kubectl get pods -n "$ns" --no-headers 2>/dev/null | awk '$2 !~ /^([0-9]+)\/\1$/ {print $1}'); do
+            for c in $(kubectl get pod "$pod" -n "$ns" -o jsonpath='{.spec.containers[*].name}' 2>/dev/null); do
+              echo "--- $pod / $c ---"
+              kubectl logs "$pod" -n "$ns" -c "$c" --tail=100 || true
+              echo "--- $pod / $c (previous) ---"
+              kubectl logs "$pod" -n "$ns" -c "$c" --previous --tail=100 2>/dev/null || true
+            done
+          done
 
       - name: Upload ct logs
         if: always()
