@@ -2,9 +2,6 @@ name: Validate ArgoCD Application
 
 on:
   pull_request:
-    paths:
-      - 'apps/argocd-apps/**.yaml'
-      - 'setup/argocd-apps/**.yaml'
   merge_group:
 
 jobs:
@@ -18,56 +15,125 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Set up Helm
-        uses: azure/setup-helm@v5
-
-      - name: Install yq
-        uses: mikefarah/yq@v4
-
-      - name: Install chart-testing (ct)
-        uses: helm/chart-testing-action@v2.8.0
-
       - name: Identify changed Application manifest
         id: changed_file
         run: |
-          FILE=$(git diff --name-only origin/${{ github.base_ref }} | \
-                 grep -E '^(apps|setup)/argocd-apps/.*\.ya?ml$' | head -n 1)
+          FILE=$(git diff --name-only "origin/${{ github.base_ref }}" | \
+                 grep -E '^(apps|setup)/argocd-apps/.*\.ya?ml$' | head -n 1 || true)
+          echo "app_file=$FILE" >> "$GITHUB_OUTPUT"
           if [ -z "$FILE" ]; then
-            echo "No application file changed. Skipping."
-            exit 1
+            echo "No ArgoCD application manifest changed by this PR. Nothing to validate."
           fi
-          echo "app_file=$FILE" >> $GITHUB_OUTPUT
+
+      - name: Set up Helm
+        if: steps.changed_file.outputs.app_file != ''
+        uses: azure/setup-helm@v5
+
+      - name: Install yq
+        if: steps.changed_file.outputs.app_file != ''
+        uses: mikefarah/yq@v4
+
+      - name: Install chart-testing (ct)
+        if: steps.changed_file.outputs.app_file != ''
+        uses: helm/chart-testing-action@v2.8.0
 
       - name: Extract chart info
+        if: steps.changed_file.outputs.app_file != ''
         id: chart
         run: |
           file="${{ steps.changed_file.outputs.app_file }}"
           echo "🔍 Parsing $file"
-          chart=$(yq e 'select(di == 0) | .spec.source.chart' "$file")
-          repo=$(yq e 'select(di == 0) | .spec.source.repoURL' "$file")
-          version=$(yq e 'select(di == 0) | .spec.source.targetRevision' "$file")
 
-          mkdir -p charts
+          # Applications declare either a single `spec.source` or a multi-source
+          # `spec.sources` list (e.g. Longhorn). Try single-source first, fall
+          # back to the first multi-source entry that references a Helm chart.
+          extract() {
+            local src_file="$1" path="$2" val
+            val=$(yq e "select(di == 0) | .spec.source.$path" "$src_file" 2>/dev/null)
+            if [[ -z "$val" || "$val" == "null" ]]; then
+              val=$(yq e "select(di == 0) | ([.spec.sources[] | select(.chart != null)])[0].$path" "$src_file" 2>/dev/null)
+            fi
+            echo "$val"
+          }
 
-          # If there are values, add to its own file
-          values=$(yq e 'select(di == 0) | .spec.source.helm.values' "$file")
-          if [[ "$values" != "null" ]]; then
-            echo "$values" > charts/values.yaml
+          chart=$(extract "$file" chart)
+          repo=$(extract "$file" repoURL)
+          version=$(extract "$file" targetRevision)
+          values=$(extract "$file" helm.values)
+          namespace=$(yq e 'select(di == 0) | .spec.destination.namespace' "$file")
+          release=$(extract "$file" helm.releaseName)
+
+          if [[ -z "$chart" || "$chart" == "null" ]]; then
+            echo "No Helm chart source in this Application (git-only source). Nothing to install-test."
+            echo "chart=" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          if [[ -z "$namespace" || "$namespace" == "null" ]]; then
+            namespace="default"
+          fi
+          if [[ -z "$release" || "$release" == "null" ]]; then
+            release="$chart"
           fi
 
-          echo "chart=$chart" >> $GITHUB_OUTPUT
-          echo "repo=$repo" >> $GITHUB_OUTPUT
-          echo "version=$version" >> $GITHUB_OUTPUT
+          echo "chart=$chart" >> "$GITHUB_OUTPUT"
+          echo "repo=$repo" >> "$GITHUB_OUTPUT"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "namespace=$namespace" >> "$GITHUB_OUTPUT"
+          echo "release=$release" >> "$GITHUB_OUTPUT"
 
-      - name: Pull chart
+          if [[ "$values" != "null" ]]; then
+            echo "$values" > repo-values.yaml
+          else
+            : > repo-values.yaml
+          fi
+          echo "📋 Values that will actually be used for this Application:"
+          cat repo-values.yaml
+
+          # What's currently deployed on this branch, so we can test the real
+          # upgrade path (old release -> new chart) rather than a fresh install.
+          old_version=""
+          if git show "origin/${{ github.base_ref }}:$file" > /tmp/base-file.yaml 2>/dev/null; then
+            old_version=$(extract /tmp/base-file.yaml targetRevision)
+            [[ "$old_version" == "null" ]] && old_version=""
+          fi
+          echo "old_version=$old_version" >> "$GITHUB_OUTPUT"
+          echo "ℹ️ Currently deployed version on ${{ github.base_ref }}: ${old_version:-<new app, no prior version>}"
+
+      - name: Pull chart(s)
+        if: steps.chart.outputs.chart != ''
         run: |
           helm repo add testrepo "${{ steps.chart.outputs.repo }}"
           helm repo update
+
+          mkdir -p charts
           helm pull testrepo/${{ steps.chart.outputs.chart }} \
-          --version "${{ steps.chart.outputs.version }}" \
-          --untar --untardir charts
+            --version "${{ steps.chart.outputs.version }}" \
+            --untar --untardir charts
+
+          # Only test our own real values, not whatever ci/ scenarios the
+          # upstream chart happens to bundle (those test the upstream
+          # maintainers' scenarios, not what we actually deploy).
+          chart_dir="charts/${{ steps.chart.outputs.chart }}"
+          rm -rf "$chart_dir/ci"
+          mkdir -p "$chart_dir/ci"
+          cp repo-values.yaml "$chart_dir/ci/repo-values.yaml"
+
+          old_version="${{ steps.chart.outputs.old_version }}"
+          if [[ -n "$old_version" && "$old_version" != "${{ steps.chart.outputs.version }}" ]]; then
+            mkdir -p charts-old
+            if helm pull testrepo/${{ steps.chart.outputs.chart }} \
+                 --version "$old_version" --untar --untardir charts-old; then
+              echo "have_old_chart=true" >> "$GITHUB_ENV"
+            else
+              echo "⚠️ Could not pull previous chart version $old_version; will fall back to a fresh install test."
+              echo "have_old_chart=false" >> "$GITHUB_ENV"
+            fi
+          else
+            echo "have_old_chart=false" >> "$GITHUB_ENV"
+          fi
 
       - name: Prepare ct config dynamically
+        if: steps.chart.outputs.chart != ''
         run: |
           # Base config for ct
           cat <<EOF > ct-config.yaml
@@ -108,6 +174,7 @@ jobs:
           cat ct-config.yaml
 
       - name: Lint chart
+        if: steps.chart.outputs.chart != ''
         run: |
           ct lint \
             --config ct-config.yaml \
@@ -116,15 +183,83 @@ jobs:
             --chart-yaml-schema .github/chart_schema.yaml \
             --validate-maintainers=false
 
+      - name: Render chart (helm template)
+        if: steps.chart.outputs.chart != ''
+        run: |
+          helm template "${{ steps.chart.outputs.release }}" "charts/${{ steps.chart.outputs.chart }}" \
+            --namespace "${{ steps.chart.outputs.namespace }}" \
+            -f repo-values.yaml > /dev/null
+          echo "✅ Chart renders cleanly with the values this repo actually uses."
+
+      # Charts here need something the ephemeral kind cluster genuinely can't
+      # provide (a real external credential, or host kernel support not
+      # available on a GitHub-hosted runner) to ever reach Ready. `helm
+      # template` above still catches schema/rendering breakage for them;
+      # only the live install/upgrade check is skipped.
+      #   - tailscale-operator: needs a real Tailscale OAuth secret.
+      #   - longhorn: needs open-iscsi/iscsid on the host node, which kind
+      #     runners don't provide; longhorn-manager crash-loops without it
+      #     regardless of chart version or values.
+      - name: Determine if live install is possible
+        if: steps.chart.outputs.chart != ''
+        id: installable
+        run: |
+          skip_list=("tailscale-operator" "longhorn")
+          chart="${{ steps.chart.outputs.chart }}"
+          installable=true
+          for c in "${skip_list[@]}"; do
+            if [[ "$chart" == "$c" ]]; then
+              installable=false
+              echo "⚠️ Skipping live install for '$chart': requires a real external credential not available in CI."
+            fi
+          done
+          echo "installable=$installable" >> "$GITHUB_OUTPUT"
+
       - name: Create kind cluster
+        if: steps.chart.outputs.chart != '' && steps.installable.outputs.installable == 'true'
         uses: helm/kind-action@v1.15.0
 
-      - name: Install chart using ct
+      - name: Install previous release (upgrade-path test)
+        if: steps.chart.outputs.chart != '' && steps.installable.outputs.installable == 'true' && env.have_old_chart == 'true'
         run: |
-          ct install \
-            --config ct-config.yaml \
-            --charts "charts/${{ steps.chart.outputs.chart }}" \
-            --helm-extra-args '--timeout 10m'
+          helm install "${{ steps.chart.outputs.release }}" "charts-old/${{ steps.chart.outputs.chart }}" \
+            --namespace "${{ steps.chart.outputs.namespace }}" --create-namespace \
+            -f repo-values.yaml --wait --timeout 5m
+
+      - name: Install or upgrade to new chart version
+        if: steps.chart.outputs.chart != '' && steps.installable.outputs.installable == 'true'
+        run: |
+          if [[ "${{ env.have_old_chart }}" == "true" ]]; then
+            echo "🔁 Simulating real upgrade: ${{ steps.chart.outputs.old_version }} -> ${{ steps.chart.outputs.version }}"
+            helm upgrade "${{ steps.chart.outputs.release }}" "charts/${{ steps.chart.outputs.chart }}" \
+              --namespace "${{ steps.chart.outputs.namespace }}" \
+              -f repo-values.yaml --wait --timeout 10m
+          else
+            echo "📦 No previous version to upgrade from; testing a fresh install."
+            helm install "${{ steps.chart.outputs.release }}" "charts/${{ steps.chart.outputs.chart }}" \
+              --namespace "${{ steps.chart.outputs.namespace }}" --create-namespace \
+              -f repo-values.yaml --wait --timeout 10m
+          fi
+
+      - name: Debug on failure
+        if: failure() && steps.chart.outputs.chart != ''
+        run: |
+          ns="${{ steps.chart.outputs.namespace }}"
+          echo "=== Pods ==="
+          kubectl get pods -n "$ns" -o wide || true
+          echo "=== Events ==="
+          kubectl get events -n "$ns" --sort-by=.lastTimestamp || true
+          echo "=== Describe pods ==="
+          kubectl describe pods -n "$ns" || true
+          echo "=== Container logs (current + previous, non-ready pods) ==="
+          for pod in $(kubectl get pods -n "$ns" --no-headers 2>/dev/null | awk '$2 !~ /^([0-9]+)\/\1$/ {print $1}'); do
+            for c in $(kubectl get pod "$pod" -n "$ns" -o jsonpath='{.spec.containers[*].name}' 2>/dev/null); do
+              echo "--- $pod / $c ---"
+              kubectl logs "$pod" -n "$ns" -c "$c" --tail=100 || true
+              echo "--- $pod / $c (previous) ---"
+              kubectl logs "$pod" -n "$ns" -c "$c" --previous --tail=100 2>/dev/null || true
+            done
+          done
 
       - name: Upload ct logs
         if: always()
