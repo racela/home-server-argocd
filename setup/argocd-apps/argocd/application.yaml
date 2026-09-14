@@ -14,6 +14,10 @@ spec:
     helm:
       releaseName: argocd
       values: |
+        global:
+          networkPolicy:
+            create: false  # preserve pre-chart-10.x behavior (no NetworkPolicies); cluster runs Calico via Canal and enforces them
+
         configs:
           cm:
             exec.enabled: true
