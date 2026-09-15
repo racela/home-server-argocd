@@ -24,3 +24,22 @@ spec:
       selfHeal: true
     syncOptions:
     - CreateNamespace=true
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: longhorn-config
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: git@github.com:racela/home-server-argocd.git
+    path: setup/config/longhorn
+    targetRevision: HEAD
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: longhorn-system
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
