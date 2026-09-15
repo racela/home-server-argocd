@@ -10,7 +10,7 @@ spec:
   source:
     chart: immich
     repoURL: oci://ghcr.io/immich-app/immich-charts/immich
-    targetRevision: 0.12.1
+    targetRevision: 0.13.2
     helm:
       releaseName: immich
       # Works around an upstream packaging bug in bjw-s-labs/helm-charts'
