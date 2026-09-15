@@ -62,6 +62,7 @@ jobs:
           values=$(extract "$file" helm.values)
           namespace=$(yq e 'select(di == 0) | .spec.destination.namespace' "$file")
           release=$(extract "$file" helm.releaseName)
+          skip_schema=$(extract "$file" helm.skipSchemaValidation)
 
           if [[ -z "$chart" || "$chart" == "null" ]]; then
             echo "No Helm chart source in this Application (git-only source). Nothing to install-test."
@@ -80,6 +81,7 @@ jobs:
           echo "version=$version" >> "$GITHUB_OUTPUT"
           echo "namespace=$namespace" >> "$GITHUB_OUTPUT"
           echo "release=$release" >> "$GITHUB_OUTPUT"
+          echo "skip_schema=$([[ "$skip_schema" == "true" ]] && echo true || echo false)" >> "$GITHUB_OUTPUT"
 
           if [[ "$values" != "null" ]]; then
             echo "$values" > repo-values.yaml
@@ -193,19 +195,31 @@ jobs:
       - name: Lint chart
         if: steps.chart.outputs.chart != ''
         run: |
+          extra_args=()
+          if [[ "${{ steps.chart.outputs.skip_schema }}" == "true" ]]; then
+            echo "ℹ️ Application sets helm.skipSchemaValidation: true; matching that here."
+            extra_args+=(--helm-lint-extra-args '--skip-schema-validation')
+          fi
+
           ct lint \
             --config ct-config.yaml \
             --charts "charts/${{ steps.chart.outputs.chart }}" \
             --lint-conf .github/lintconf.yaml \
             --chart-yaml-schema .github/chart_schema.yaml \
-            --validate-maintainers=false
+            --validate-maintainers=false \
+            "${extra_args[@]}"
 
       - name: Render chart (helm template)
         if: steps.chart.outputs.chart != ''
         run: |
+          extra_args=()
+          if [[ "${{ steps.chart.outputs.skip_schema }}" == "true" ]]; then
+            extra_args+=(--skip-schema-validation)
+          fi
+
           helm template "${{ steps.chart.outputs.release }}" "charts/${{ steps.chart.outputs.chart }}" \
             --namespace "${{ steps.chart.outputs.namespace }}" \
-            -f repo-values.yaml > /dev/null
+            -f repo-values.yaml "${extra_args[@]}" > /dev/null
           echo "✅ Chart renders cleanly with the values this repo actually uses."
 
       # Charts here need something the ephemeral kind cluster genuinely can't
@@ -277,23 +291,31 @@ jobs:
       - name: Install previous release (upgrade-path test)
         if: steps.chart.outputs.chart != '' && steps.installable.outputs.installable == 'true' && env.have_old_chart == 'true'
         run: |
+          extra_args=()
+          if [[ "${{ steps.chart.outputs.skip_schema }}" == "true" ]]; then
+            extra_args+=(--skip-schema-validation)
+          fi
           helm install "${{ steps.chart.outputs.release }}" "charts-old/${{ steps.chart.outputs.chart }}" \
             --namespace "${{ steps.chart.outputs.namespace }}" --create-namespace \
-            -f repo-values.yaml --wait --timeout 5m
+            -f repo-values.yaml --wait --timeout 5m "${extra_args[@]}"
 
       - name: Install or upgrade to new chart version
         if: steps.chart.outputs.chart != '' && steps.installable.outputs.installable == 'true'
         run: |
+          extra_args=()
+          if [[ "${{ steps.chart.outputs.skip_schema }}" == "true" ]]; then
+            extra_args+=(--skip-schema-validation)
+          fi
           if [[ "${{ env.have_old_chart }}" == "true" ]]; then
             echo "🔁 Simulating real upgrade: ${{ steps.chart.outputs.old_version }} -> ${{ steps.chart.outputs.version }}"
             helm upgrade "${{ steps.chart.outputs.release }}" "charts/${{ steps.chart.outputs.chart }}" \
               --namespace "${{ steps.chart.outputs.namespace }}" \
-              -f repo-values.yaml --wait --timeout 10m
+              -f repo-values.yaml --wait --timeout 10m "${extra_args[@]}"
           else
             echo "📦 No previous version to upgrade from; testing a fresh install."
             helm install "${{ steps.chart.outputs.release }}" "charts/${{ steps.chart.outputs.chart }}" \
               --namespace "${{ steps.chart.outputs.namespace }}" --create-namespace \
-              -f repo-values.yaml --wait --timeout 10m
+              -f repo-values.yaml --wait --timeout 10m "${extra_args[@]}"
           fi
 
       - name: Debug on failure
