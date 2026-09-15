@@ -112,7 +112,18 @@ jobs:
           # format; OCI registries have no such index, so pull straight from
           # the oci:// reference instead of aliasing it as a repo.
           if [[ "$repo" == oci://* ]]; then
-            pull() { helm pull "${repo}/${chart}" --version "$1" --untar --untardir "$2"; }
+            # Some Applications (e.g. immich) must set repoURL to the full
+            # oci://.../<chart> path with chart *also* set, because ArgoCD's
+            # own OCI resolver (util/oci/client.go) treats an oci://-prefixed
+            # repoURL as the complete, literal reference and does not append
+            # chart itself - unlike the schema-less repoURL+chart convention.
+            # Don't double it here either.
+            if [[ "$repo" == */"$chart" ]]; then
+              chart_ref="$repo"
+            else
+              chart_ref="${repo}/${chart}"
+            fi
+            pull() { helm pull "$chart_ref" --version "$1" --untar --untardir "$2"; }
           else
             helm repo add testrepo "$repo"
             helm repo update
