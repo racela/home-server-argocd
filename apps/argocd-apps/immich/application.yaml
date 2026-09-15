@@ -9,7 +9,7 @@ spec:
   project: default
   source:
     chart: immich
-    repoURL: oci://ghcr.io/immich-app/immich-charts/immich
+    repoURL: oci://ghcr.io/immich-app/immich-charts
     targetRevision: 0.12.1
     helm:
       releaseName: immich
