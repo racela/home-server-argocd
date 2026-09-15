@@ -21,6 +21,7 @@ spec:
             memory: 64Mi
         commandArgs:
           - --update-status
+          - --key-renew-period=0
   destination:
     server: https://kubernetes.default.svc
     namespace: kube-system
