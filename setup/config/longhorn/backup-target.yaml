@@ -1,0 +1,9 @@
+apiVersion: longhorn.io/v1beta2
+kind: BackupTarget
+metadata:
+  name: default
+  namespace: longhorn-system
+spec:
+  backupTargetURL: s3://rafa-home-server-backups@us-west-004/
+  credentialSecret: b2-backup-credentials
+  pollInterval: 5m0s
