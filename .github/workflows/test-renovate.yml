@@ -236,6 +236,26 @@ jobs:
         if: steps.chart.outputs.chart != '' && steps.installable.outputs.installable == 'true'
         uses: helm/kind-action@v1.15.0
 
+      # Real longhorn is excluded above (needs open-iscsi kind can't provide),
+      # but most of our charts still request `storageClass: longhorn` for
+      # their PVCs since that's our real cluster's provisioner. Stand in a
+      # StorageClass of that name backed by kind's built-in local-path
+      # provisioner so those PVCs bind and install/upgrade actually runs,
+      # rather than every stateful chart's live-install timing out on an
+      # unbound PVC.
+      - name: Provide stand-in "longhorn" StorageClass
+        if: steps.chart.outputs.chart != '' && steps.installable.outputs.installable == 'true'
+        run: |
+          kubectl apply -f - <<'EOF'
+          apiVersion: storage.k8s.io/v1
+          kind: StorageClass
+          metadata:
+            name: longhorn
+          provisioner: rancher.io/local-path
+          volumeBindingMode: WaitForFirstConsumer
+          reclaimPolicy: Delete
+          EOF
+
       - name: Install previous release (upgrade-path test)
         if: steps.chart.outputs.chart != '' && steps.installable.outputs.installable == 'true' && env.have_old_chart == 'true'
         run: |
