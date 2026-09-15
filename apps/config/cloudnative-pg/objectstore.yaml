@@ -1,0 +1,20 @@
+apiVersion: barmancloud.cnpg.io/v1
+kind: ObjectStore
+metadata:
+  name: b2-backup
+  namespace: cloudnative-pg
+spec:
+  configuration:
+    destinationPath: s3://rafa-home-server-backups/cnpg/
+    endpointURL: https://s3.us-west-004.backblazeb2.com
+    s3Credentials:
+      accessKeyId:
+        name: barman-cloud-credentials
+        key: ACCESS_KEY_ID
+      secretAccessKey:
+        name: barman-cloud-credentials
+        key: ACCESS_SECRET_KEY
+    wal:
+      compression: gzip
+  instanceSidecarConfiguration:
+    retentionPolicyIntervalSeconds: 1800
