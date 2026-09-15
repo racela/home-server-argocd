@@ -217,11 +217,15 @@ jobs:
       #   - longhorn: needs open-iscsi/iscsid on the host node, which kind
       #     runners don't provide; longhorn-manager crash-loops without it
       #     regardless of chart version or values.
+      #   - immich: references an existingSecret (immich-db-secret) and an
+      #     existingClaim PVC (immich-library-pvc) provisioned by other
+      #     Applications in the real cluster, not by this chart. This
+      #     isolated single-chart test has no way to see those.
       - name: Determine if live install is possible
         if: steps.chart.outputs.chart != ''
         id: installable
         run: |
-          skip_list=("tailscale-operator" "longhorn")
+          skip_list=("tailscale-operator" "longhorn" "immich")
           chart="${{ steps.chart.outputs.chart }}"
           installable=true
           for c in "${skip_list[@]}"; do
