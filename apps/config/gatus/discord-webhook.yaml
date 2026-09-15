@@ -1,0 +1,14 @@
+---
+apiVersion: bitnami.com/v1alpha1
+kind: SealedSecret
+metadata:
+  name: discord-webhook
+  namespace: gatus
+spec:
+  encryptedData:
+    DISCORD_WEBHOOK_URL: AgCcZ1NMJ3iNagMPtGzoU5zXpjHgPt7icEOY8jxCSgcfhl/lCbphsQe0k1Qa7GiZMHlJxiBRSBYf/ooDqM+yfyu3UwFyJtGcMDjYITZQ8xOiev0aU3LFeVCLfHf2nOkvTHru9tOlX9PVfdX5krX1YvAAqHrqQ5D7LBd4x1Y5uovI5bE7fOCQSCZYCyLiUcG/1YvlkStkeo/x3V4/4yfSRFzKoacSNkgmRPxCmaT9nzZctaLiwTIkzkGKNPQGg9bYzhU8jQ5lnXwA2rM8xkQUZHw9CQAotgIobxdKLPtzMvnYRJZmeAd3r4bK7PF6eRlYf7If7CfxjGG4x6SexwwBMmOxZfIag5MwEuYwHPRnPr/MUPXuRqvblJPORhiLxkWu5HSehI59CFbUcex/KMI41gEXzdnVgaxyNNLib6UbGxk7d5y27+NyRVD/6sme0KFcsUDQqqFjd2V67FPKg3qFqQF0/+9kRtgwLTkX26lQrC+46q5U6th81KN6PMJEYHILbvZn7kVN33ZImJPt88/nABYhkZj8IqxW/xwqSLKaItwrtVA8dXB3t841Y5gePejeMQY8sR1FvcisnHHzF1NEP5rIeNTCK3zGoPQDx0LstokbeTVI4zJ7Z5rQkc9bDAHBUT1d2IM8ThigyJP1TdpI+zyrZBHGQpZDqVcpE2m3B49jl0kOrs9ZvZoQIVcAP8pKTZrHhW/wj3bIyrNfNW3DoCso2u6ZJbkhnCI+g+VIo/DPy144cw85pdRB6JdhfS4pL958fdQ2oMQRfGjXPeHXQcsvy2bAW3wVo1IQkbkvSP2dp5ulXFQSpH46/UenIbBc5aZiFZzAJQ2G9HEHhTy5hdPcZxkdTKUiZk9A
+  template:
+    metadata:
+      name: discord-webhook
+      namespace: gatus
+    type: Opaque
