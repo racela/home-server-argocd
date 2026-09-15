@@ -19,9 +19,8 @@ spec:
           limits:
             cpu: 50m
             memory: 64Mi
-        commandArgs:
-          - --update-status
-          - --key-renew-period=0
+        updateStatus: true
+        keyrenewperiod: "0"
   destination:
     server: https://kubernetes.default.svc
     namespace: kube-system
