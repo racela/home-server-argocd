@@ -1,0 +1,32 @@
+# Adds these 3 volumes to the "critical" recurring-job group (see
+# recurring-job-daily-backup.yaml). Longhorn does not read labels from
+# PVCs for pre-existing volumes, so these target the Longhorn Volume
+# objects directly - which means the names below are the dynamically
+# generated pvc-<uuid> names Longhorn assigned when these PVCs were
+# first provisioned, not something declarative/human-chosen. If any of
+# these 3 PVCs is ever deleted and recreated from scratch, the
+# resulting volume gets a new name and this file needs updating to
+# match (kubectl get pvc -A shows current volume names).
+apiVersion: longhorn.io/v1beta2
+kind: Volume
+metadata:
+  name: pvc-041d808f-906e-4e07-aa62-534ebe05fd06 # home-assistant
+  namespace: longhorn-system
+  labels:
+    recurring-job-group.longhorn.io/critical: enabled
+---
+apiVersion: longhorn.io/v1beta2
+kind: Volume
+metadata:
+  name: pvc-4dcb8a31-f46a-4172-b982-da94c518cdf7 # plex-config-pvc
+  namespace: longhorn-system
+  labels:
+    recurring-job-group.longhorn.io/critical: enabled
+---
+apiVersion: longhorn.io/v1beta2
+kind: Volume
+metadata:
+  name: pvc-1badab50-d940-49f9-a60d-222a9225bfc9 # cloudnative-pg db-cluster-1
+  namespace: longhorn-system
+  labels:
+    recurring-job-group.longhorn.io/critical: enabled
