@@ -1,0 +1,13 @@
+apiVersion: postgresql.cnpg.io/v1
+kind: ScheduledBackup
+metadata:
+  name: db-cluster-daily-backup
+  namespace: cloudnative-pg
+spec:
+  schedule: "0 0 3 * * *" # 3am daily - note CNPG schedules have a leading seconds field, unlike standard cron
+  immediate: true # take a base backup right away instead of waiting for the first scheduled run
+  cluster:
+    name: db-cluster
+  method: plugin
+  pluginConfiguration:
+    name: barman-cloud.cloudnative-pg.io

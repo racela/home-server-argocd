@@ -16,5 +16,6 @@ spec:
         key: ACCESS_SECRET_KEY
     wal:
       compression: gzip
+  retentionPolicy: 30d
   instanceSidecarConfiguration:
     retentionPolicyIntervalSeconds: 1800
