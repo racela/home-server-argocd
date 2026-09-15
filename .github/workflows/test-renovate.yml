@@ -102,27 +102,36 @@ jobs:
       - name: Pull chart(s)
         if: steps.chart.outputs.chart != ''
         run: |
-          helm repo add testrepo "${{ steps.chart.outputs.repo }}"
-          helm repo update
+          repo="${{ steps.chart.outputs.repo }}"
+          chart="${{ steps.chart.outputs.chart }}"
+          version="${{ steps.chart.outputs.version }}"
+
+          # `helm repo add` only understands the classic HTTP index-based repo
+          # format; OCI registries have no such index, so pull straight from
+          # the oci:// reference instead of aliasing it as a repo.
+          if [[ "$repo" == oci://* ]]; then
+            pull() { helm pull "${repo}/${chart}" --version "$1" --untar --untardir "$2"; }
+          else
+            helm repo add testrepo "$repo"
+            helm repo update
+            pull() { helm pull "testrepo/${chart}" --version "$1" --untar --untardir "$2"; }
+          fi
 
           mkdir -p charts
-          helm pull testrepo/${{ steps.chart.outputs.chart }} \
-            --version "${{ steps.chart.outputs.version }}" \
-            --untar --untardir charts
+          pull "$version" charts
 
           # Only test our own real values, not whatever ci/ scenarios the
           # upstream chart happens to bundle (those test the upstream
           # maintainers' scenarios, not what we actually deploy).
-          chart_dir="charts/${{ steps.chart.outputs.chart }}"
+          chart_dir="charts/${chart}"
           rm -rf "$chart_dir/ci"
           mkdir -p "$chart_dir/ci"
           cp repo-values.yaml "$chart_dir/ci/repo-values.yaml"
 
           old_version="${{ steps.chart.outputs.old_version }}"
-          if [[ -n "$old_version" && "$old_version" != "${{ steps.chart.outputs.version }}" ]]; then
+          if [[ -n "$old_version" && "$old_version" != "$version" ]]; then
             mkdir -p charts-old
-            if helm pull testrepo/${{ steps.chart.outputs.chart }} \
-                 --version "$old_version" --untar --untardir charts-old; then
+            if pull "$old_version" charts-old; then
               echo "have_old_chart=true" >> "$GITHUB_ENV"
             else
               echo "⚠️ Could not pull previous chart version $old_version; will fall back to a fresh install test."
@@ -139,11 +148,19 @@ jobs:
           cat <<EOF > ct-config.yaml
           chart-dirs:
             - charts
-          chart-repos:
-            - testrepo=${{ steps.chart.outputs.repo }}
+          chart-repos: []
           check-version-increment: false
           debug: true
           EOF
+
+          # `ct` shells out to `helm repo add` for every chart-repos entry,
+          # which (like the manual pull above) can't handle OCI registries.
+          # Vendored chart deps are already in the pulled archive, so it's
+          # not needed for those; skip registering it for OCI sources.
+          repo="${{ steps.chart.outputs.repo }}"
+          if [[ "$repo" != oci://* ]]; then
+            yq -i ".chart-repos += [\"testrepo=$repo\"]" ct-config.yaml
+          fi
 
           chart_path="charts/${{ steps.chart.outputs.chart }}/Chart.yaml"
 
@@ -218,6 +235,26 @@ jobs:
       - name: Create kind cluster
         if: steps.chart.outputs.chart != '' && steps.installable.outputs.installable == 'true'
         uses: helm/kind-action@v1.15.0
+
+      # Real longhorn is excluded above (needs open-iscsi kind can't provide),
+      # but most of our charts still request `storageClass: longhorn` for
+      # their PVCs since that's our real cluster's provisioner. Stand in a
+      # StorageClass of that name backed by kind's built-in local-path
+      # provisioner so those PVCs bind and install/upgrade actually runs,
+      # rather than every stateful chart's live-install timing out on an
+      # unbound PVC.
+      - name: Provide stand-in "longhorn" StorageClass
+        if: steps.chart.outputs.chart != '' && steps.installable.outputs.installable == 'true'
+        run: |
+          kubectl apply -f - <<'EOF'
+          apiVersion: storage.k8s.io/v1
+          kind: StorageClass
+          metadata:
+            name: longhorn
+          provisioner: rancher.io/local-path
+          volumeBindingMode: WaitForFirstConsumer
+          reclaimPolicy: Delete
+          EOF
 
       - name: Install previous release (upgrade-path test)
         if: steps.chart.outputs.chart != '' && steps.installable.outputs.installable == 'true' && env.have_old_chart == 'true'
