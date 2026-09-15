@@ -256,6 +256,20 @@ jobs:
           reclaimPolicy: Delete
           EOF
 
+      # Some charts (e.g. immich, with metrics.enabled: true) render a
+      # ServiceMonitor, which only exists as a CRD once the Prometheus
+      # Operator is installed. Our real cluster has it; the ephemeral kind
+      # cluster doesn't, so `helm install` fails immediately with "no
+      # matches for kind ServiceMonitor" before any pod even starts. Install
+      # just the CRD (server-side: these CRDs exceed kubectl's client-side
+      # apply annotation size limit) so charts that reference it still get a
+      # real install/upgrade test.
+      - name: Provide ServiceMonitor CRD
+        if: steps.chart.outputs.chart != '' && steps.installable.outputs.installable == 'true'
+        run: |
+          kubectl apply --server-side -f \
+            https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.77.1/example/prometheus-operator-crd/monitoring.coreos.com_servicemonitors.yaml
+
       - name: Install previous release (upgrade-path test)
         if: steps.chart.outputs.chart != '' && steps.installable.outputs.installable == 'true' && env.have_old_chart == 'true'
         run: |
