@@ -29,7 +29,7 @@ spec:
           command:
             - /bin/sh
             - -c
-            - "restic -o s3.connections=15 restore \"$SNAPSHOT_ID\" --target /data --verbose"
+            - "restic -o s3.connections=15 unlock --remove-all || true; restic -o s3.connections=15 restore \"$SNAPSHOT_ID\" --target /data --verbose"
           env:
             - name: SNAPSHOT_ID
               value: "latest" # change to a specific snapshot ID for point-in-time restore

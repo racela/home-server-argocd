@@ -20,7 +20,8 @@ spec:
                 - -c
                 - |
                   set -e
-                  restic -o s3.connections=15 snapshots || restic -o s3.connections=15 init
+                  restic -o s3.connections=15 unlock --remove-all || true
+                  restic -o s3.connections=15 init || true
                   restic -o s3.connections=15 backup /data --tag immich-library --json
                   restic -o s3.connections=15 forget --keep-daily 7 --prune
               env:
