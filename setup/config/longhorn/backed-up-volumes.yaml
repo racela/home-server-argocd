@@ -9,11 +9,18 @@
 # this file needs updating to match (kubectl get pvc -A shows current
 # volume names).
 #
-# CNPG postgres changes daily (immich library is actively used) ->
-# daily group. home-assistant and plex-config only accumulate minor
-# incremental state (device pairing, resume points) where losing a
-# few days of it is a non-event -> weekly group with longer retention
-# instead, so recovery points cover more time for the same cost.
+# home-assistant and plex-config only accumulate minor incremental
+# state (device pairing, resume points) where losing a few days of it
+# is a non-event -> weekly group with longer retention instead, so
+# recovery points cover more time for the same cost.
+#
+# The CNPG postgres volume below is deliberately left with no group
+# label - now that barman-cloud does continuous WAL archiving + daily
+# base backups (see apps/config/cloudnative-pg/), a raw Longhorn
+# snapshot of this volume is redundant and strictly worse (crash-
+# consistent at best, no point-in-time recovery). The manifest itself
+# is kept (not deleted) so ArgoCD continues to manage this resource
+# instead of pruning the live Longhorn Volume object entirely.
 apiVersion: longhorn.io/v1beta2
 kind: Volume
 metadata:
@@ -35,5 +42,4 @@ kind: Volume
 metadata:
   name: pvc-1badab50-d940-49f9-a60d-222a9225bfc9 # cloudnative-pg db-cluster-1
   namespace: longhorn-system
-  labels:
-    recurring-job-group.longhorn.io/critical: enabled
+  labels: {}
