@@ -20,9 +20,9 @@ spec:
                 - -c
                 - |
                   set -e
-                  restic snapshots || restic init
-                  restic backup /data --tag immich-library
-                  restic forget --keep-daily 7 --prune
+                  restic -o s3.connections=15 snapshots || restic -o s3.connections=15 init
+                  restic -o s3.connections=15 backup /data --tag immich-library --json
+                  restic -o s3.connections=15 forget --keep-daily 7 --prune
               env:
                 - name: RESTIC_REPOSITORY
                   value: "s3:https://s3.us-west-004.backblazeb2.com/rafa-home-server-backups/immich/"
