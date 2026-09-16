@@ -1,0 +1,59 @@
+# Not synced by ArgoCD - this directory is intentionally outside every
+# Application's `path:`. A Job runs immediately on `kubectl apply`, so
+# this must never live somewhere GitOps would apply it automatically.
+#
+# Usage:
+#   1. (Optional) List available snapshots first:
+#      kubectl run restic-list --rm -it --restart=Never -n immich \
+#        --image=restic/restic:0.19.1 \
+#        --overrides='{"spec":{"containers":[{"name":"restic-list","image":"restic/restic:0.19.1","command":["restic","snapshots"],"envFrom":[{"secretRef":{"name":"immich-restic-credentials"}}],"env":[{"name":"RESTIC_REPOSITORY","value":"s3:https://s3.us-west-004.backblazeb2.com/rafa-home-server-backups/immich/"}]}]}}'
+#   2. Edit SNAPSHOT_ID below if you want a specific point in time
+#      (defaults to "latest").
+#   3. kubectl apply -f runbooks/immich-library-restore-job.yaml
+#   4. kubectl logs -n immich -f job/immich-library-restore
+#   5. kubectl delete -f runbooks/immich-library-restore-job.yaml
+#      when done, so a stray old Job doesn't linger.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: immich-library-restore
+  namespace: immich
+spec:
+  backoffLimit: 0
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: restic-restore
+          image: restic/restic:0.19.1
+          command:
+            - /bin/sh
+            - -c
+            - "restic restore \"$SNAPSHOT_ID\" --target /data"
+          env:
+            - name: SNAPSHOT_ID
+              value: "latest" # change to a specific snapshot ID for point-in-time restore
+            - name: RESTIC_REPOSITORY
+              value: "s3:https://s3.us-west-004.backblazeb2.com/rafa-home-server-backups/immich/"
+            - name: AWS_ACCESS_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                  name: immich-restic-credentials
+                  key: AWS_ACCESS_KEY_ID
+            - name: AWS_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: immich-restic-credentials
+                  key: AWS_SECRET_ACCESS_KEY
+            - name: RESTIC_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: immich-restic-credentials
+                  key: RESTIC_PASSWORD
+          volumeMounts:
+            - name: immich-library
+              mountPath: /data
+      volumes:
+        - name: immich-library
+          persistentVolumeClaim:
+            claimName: immich-library-pvc
