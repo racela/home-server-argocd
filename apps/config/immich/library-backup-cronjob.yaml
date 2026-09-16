@@ -1,0 +1,52 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: immich-library-backup
+  namespace: immich
+spec:
+  schedule: "0 19 * * *" # 19:00 UTC = 3am Philippine time (UTC+8)
+  concurrencyPolicy: Forbid
+  jobTemplate:
+    spec:
+      backoffLimit: 1
+      template:
+        spec:
+          restartPolicy: OnFailure
+          containers:
+            - name: restic-backup
+              image: restic/restic:0.19.1
+              command:
+                - /bin/sh
+                - -c
+                - |
+                  set -e
+                  restic snapshots || restic init
+                  restic backup /data --tag immich-library
+                  restic forget --keep-daily 7 --prune
+              env:
+                - name: RESTIC_REPOSITORY
+                  value: "s3:https://s3.us-west-004.backblazeb2.com/rafa-home-server-backups/immich/"
+                - name: AWS_ACCESS_KEY_ID
+                  valueFrom:
+                    secretKeyRef:
+                      name: immich-restic-credentials
+                      key: AWS_ACCESS_KEY_ID
+                - name: AWS_SECRET_ACCESS_KEY
+                  valueFrom:
+                    secretKeyRef:
+                      name: immich-restic-credentials
+                      key: AWS_SECRET_ACCESS_KEY
+                - name: RESTIC_PASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: immich-restic-credentials
+                      key: RESTIC_PASSWORD
+              volumeMounts:
+                - name: immich-library
+                  mountPath: /data
+                  readOnly: true
+          volumes:
+            - name: immich-library
+              persistentVolumeClaim:
+                claimName: immich-library-pvc
+                readOnly: true
