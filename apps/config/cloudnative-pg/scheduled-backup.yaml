@@ -4,7 +4,7 @@ metadata:
   name: db-cluster-daily-backup
   namespace: cloudnative-pg
 spec:
-  schedule: "0 0 3 * * *" # 3am daily - note CNPG schedules have a leading seconds field, unlike standard cron
+  schedule: "0 0 19 * * *" # 19:00 UTC = 3am Philippine time (UTC+8) daily - note CNPG schedules have a leading seconds field, unlike standard cron. This runs in the operator pod's local time, which is plain UTC.
   immediate: true # take a base backup right away instead of waiting for the first scheduled run
   cluster:
     name: db-cluster

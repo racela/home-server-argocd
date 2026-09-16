@@ -4,7 +4,7 @@ metadata:
   name: weekly-backup
   namespace: longhorn-system
 spec:
-  cron: "0 3 * * 0"
+  cron: "0 19 * * 6" # Saturday 19:00 UTC = Sunday 3am Philippine time (UTC+8) - day shifts across midnight when converting
   task: backup
   groups:
     - weekly
