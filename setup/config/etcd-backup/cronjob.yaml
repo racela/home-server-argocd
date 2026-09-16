@@ -1,0 +1,82 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: etcd-snapshot-backup
+  namespace: etcd-backup
+spec:
+  schedule: "0 19 * * *" # 19:00 UTC = 3am Philippine time (UTC+8)
+  concurrencyPolicy: Forbid
+  jobTemplate:
+    spec:
+      backoffLimit: 1
+      template:
+        spec:
+          restartPolicy: OnFailure
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 65534
+            seccompProfile:
+              type: RuntimeDefault
+          initContainers:
+            - name: etcd-snapshot
+              image: ghcr.io/siderolabs/talosctl:v1.11.5
+              command:
+                - talosctl
+                - --talosconfig=/talosconfig/config
+                - -n
+                - "192.168.1.121" # any control-plane node has a full etcd replica
+                - etcd
+                - snapshot
+                - /shared/etcd-snapshot.db
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop: ["ALL"]
+              volumeMounts:
+                - name: talosconfig
+                  mountPath: /talosconfig
+                  readOnly: true
+                - name: shared
+                  mountPath: /shared
+          containers:
+            - name: restic-backup
+              image: restic/restic:0.19.1
+              command:
+                - /bin/sh
+                - -c
+                - |
+                  set -e
+                  restic -o s3.connections=15 snapshots || restic -o s3.connections=15 init
+                  restic -o s3.connections=15 backup /shared --tag etcd-snapshot
+                  restic -o s3.connections=15 forget --keep-daily 7 --prune
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop: ["ALL"]
+              env:
+                - name: RESTIC_REPOSITORY
+                  value: "s3:https://s3.us-west-004.backblazeb2.com/rafa-home-server-backups/etcd/"
+                - name: AWS_ACCESS_KEY_ID
+                  valueFrom:
+                    secretKeyRef:
+                      name: etcd-backup-restic-credentials
+                      key: AWS_ACCESS_KEY_ID
+                - name: AWS_SECRET_ACCESS_KEY
+                  valueFrom:
+                    secretKeyRef:
+                      name: etcd-backup-restic-credentials
+                      key: AWS_SECRET_ACCESS_KEY
+                - name: RESTIC_PASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: etcd-backup-restic-credentials
+                      key: RESTIC_PASSWORD
+              volumeMounts:
+                - name: shared
+                  mountPath: /shared
+          volumes:
+            - name: talosconfig
+              secret:
+                secretName: etcd-backup-talosconfig
+            - name: shared
+              emptyDir: {}
