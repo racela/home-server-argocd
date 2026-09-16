@@ -20,8 +20,7 @@ spec:
           initContainers:
             - name: etcd-snapshot
               image: ghcr.io/siderolabs/talosctl:v1.11.5
-              command:
-                - talosctl
+              args:
                 - --talosconfig=/talosconfig/config
                 - -n
                 - "192.168.1.121" # any control-plane node has a full etcd replica
