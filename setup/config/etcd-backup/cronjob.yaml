@@ -45,8 +45,9 @@ spec:
                 - -c
                 - |
                   set -e
-                  restic -o s3.connections=15 snapshots || restic -o s3.connections=15 init
-                  restic -o s3.connections=15 backup /shared --tag etcd-snapshot
+                  restic -o s3.connections=15 unlock --remove-all || true
+                  restic -o s3.connections=15 init || true
+                  restic -o s3.connections=15 backup /shared --tag etcd-snapshot --json
                   restic -o s3.connections=15 forget --keep-daily 7 --prune
               securityContext:
                 allowPrivilegeEscalation: false
