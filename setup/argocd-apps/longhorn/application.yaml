@@ -3,6 +3,8 @@ kind: Application
 metadata:
   name: longhorn
   namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
 spec:
   project: default
   sources:
@@ -22,14 +24,17 @@ spec:
     automated:
       prune: true
       selfHeal: true
-    syncOptions:
-    - CreateNamespace=true
 ---
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
   name: longhorn-config
   namespace: argocd
+  annotations:
+    # One wave before the main app - the Namespace object here (with its
+    # required Talos pod-security label) must exist before the chart
+    # tries to create any pod, not CreateNamespace=true's unlabeled one.
+    argocd.argoproj.io/sync-wave: "-1"
 spec:
   project: default
   source:

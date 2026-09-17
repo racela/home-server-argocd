@@ -1,0 +1,23 @@
+# Talos enforces the "baseline" Pod Security Standard on every namespace
+# by default (except kube-system, which gets "privileged") - see
+# https://docs.siderolabs.com/kubernetes-guides/security/pod-security.
+# Longhorn needs privileged containers + hostPath access to manage iSCSI
+# and block devices directly, which "baseline" forbids. Previously
+# applied by hand (`kubectl label ns ...`), never codified - this app's
+# own Application syncs at an earlier wave than the main longhorn chart
+# so this exists before any pod is created.
+#
+# enforce is the only mode that actually blocks pod admission; audit/warn
+# only affect audit-log entries / kubectl warning banners. Set all three
+# to privileged (matching metallb-system/tailscale) so Longhorn's pods -
+# already fully permitted via enforce alone - don't generate spurious
+# baseline-violation noise from inheriting the cluster's audit/warn
+# defaults.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: longhorn-system
+  labels:
+    pod-security.kubernetes.io/enforce: privileged
+    pod-security.kubernetes.io/audit: privileged
+    pod-security.kubernetes.io/warn: privileged
