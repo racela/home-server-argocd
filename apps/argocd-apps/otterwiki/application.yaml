@@ -53,3 +53,24 @@ spec:
       selfHeal: true
     syncOptions:
     - CreateNamespace=true
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: otterwiki-config
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "3"
+spec:
+  project: default
+  source:
+    repoURL: git@github.com:racela/home-server-argocd.git
+    path: apps/config/otterwiki
+    targetRevision: HEAD
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: otterwiki
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
