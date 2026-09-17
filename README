@@ -1,4 +1,5 @@
 To do:
+- test restore, check official immich/cnpg/plex/home-assistant/k8s (for etcd) docs
 - Create readme for this repo
 - Upgrade kubernetes/talos/proxmox
 - Connect gpu so we can run gpu-related workloads
