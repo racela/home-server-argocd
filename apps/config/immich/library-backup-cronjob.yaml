@@ -24,6 +24,15 @@ spec:
                   restic -o s3.connections=15 init || true
                   restic -o s3.connections=15 backup /data --tag immich-library --json
                   restic -o s3.connections=15 forget --keep-daily 7 --prune
+              # Higher than etcd-backup's equivalent job - scanning/
+              # hashing a 150GB+ library needs more headroom than a
+              # single small snapshot file.
+              resources:
+                requests:
+                  cpu: 250m
+                  memory: 256Mi
+                limits:
+                  memory: 512Mi
               env:
                 - name: RESTIC_REPOSITORY
                   value: "s3:https://s3.us-west-004.backblazeb2.com/rafa-home-server-backups/immich/"

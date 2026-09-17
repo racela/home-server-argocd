@@ -13,6 +13,13 @@ spec:
     targetRevision: 0.29.0
     helm:
       releaseName: cloudnative-pg
+      values: |
+        resources:
+          requests:
+            cpu: 50m
+            memory: 64Mi
+          limits:
+            memory: 256Mi
   destination:
     server: https://kubernetes.default.svc
     namespace: cloudnative-pg

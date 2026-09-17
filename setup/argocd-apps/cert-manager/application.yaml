@@ -24,6 +24,23 @@ spec:
           requests:
             cpu: 100m
             memory: 128Mi
+        # cainjector/webhook are separate Deployments in this chart, each
+        # with their own resources key - the top-level one above only
+        # covers the main controller.
+        webhook:
+          resources:
+            requests:
+              cpu: 25m
+              memory: 64Mi
+            limits:
+              memory: 128Mi
+        cainjector:
+          resources:
+            requests:
+              cpu: 25m
+              memory: 64Mi
+            limits:
+              memory: 128Mi
   destination:
     server: https://kubernetes.default.svc
     namespace: cert-manager

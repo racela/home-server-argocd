@@ -14,6 +14,13 @@ spec:
     helm:
       releaseName: metallb
       values: |
+        # frrk8s defaults to enabled in this chart even though nothing
+        # here uses BGP - confirmed no BGPPeer/BGPAdvertisement exist,
+        # only L2Advertisement/IPAddressPool, so the speaker's L2/ARP
+        # mode handles LB IP announcement entirely without it. Disabling
+        # rather than resourcing 15 containers doing nothing.
+        frrk8s:
+          enabled: false
         controller:
           logLevel: info
           resources:

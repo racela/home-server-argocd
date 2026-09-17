@@ -13,6 +13,13 @@ spec:
     targetRevision: 0.8.0
     helm:
       releaseName: plugin-barman-cloud
+      values: |
+        resources:
+          requests:
+            cpu: 25m
+            memory: 64Mi
+          limits:
+            memory: 128Mi
   destination:
     server: https://kubernetes.default.svc
     namespace: cloudnative-pg
