@@ -100,10 +100,13 @@ spec:
 
             - name: Blocky
               group: dns
-              url: http://blocky-http.blocky.svc.cluster.local:4000/metrics
+              url: blocky-udp-lb.blocky.svc.cluster.local
               interval: 1m
+              dns:
+                query-name: "healthcheck.blocky"
+                query-type: "A"
               conditions:
-                - "[STATUS] == 200"
+                - "[DNS_RCODE] == NOERROR"
               alerts:
               - type: discord
                 description: "healthcheck failed"
