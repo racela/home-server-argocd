@@ -20,8 +20,6 @@ spec:
     automated:
       prune: true
       selfHeal: true
-    syncOptions:
-    - CreateNamespace=true
 ---
 apiVersion: argoproj.io/v1alpha1
 kind: Application
@@ -29,7 +27,10 @@ metadata:
   name: tailscale-config
   namespace: argocd
   annotations:
-    argocd.argoproj.io/sync-wave: "4"
+    # One wave before the main app - the Namespace object here (with its
+    # required Talos pod-security label) must exist before the chart's
+    # proxy pods get created, not CreateNamespace=true's unlabeled one.
+    argocd.argoproj.io/sync-wave: "3"
 spec:
   project: default
   source:

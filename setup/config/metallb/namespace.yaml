@@ -1,0 +1,16 @@
+# Talos enforces the "baseline" Pod Security Standard on every namespace
+# by default (except kube-system, which gets "privileged") - see
+# https://docs.siderolabs.com/kubernetes-guides/security/pod-security.
+# metallb's speaker needs hostNetwork + NET_RAW/NET_ADMIN to send L2
+# ARP/NDP announcements directly on the host network, which "baseline"
+# forbids. Previously applied by hand (`kubectl label ns ...`), never
+# codified - this app's own Application syncs at an earlier wave than
+# the main metallb chart so this exists before any pod is created.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: metallb-system
+  labels:
+    pod-security.kubernetes.io/enforce: privileged
+    pod-security.kubernetes.io/audit: privileged
+    pod-security.kubernetes.io/warn: privileged
