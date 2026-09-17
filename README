@@ -2,6 +2,8 @@ To do:
 - Create readme for this repo
 - Upgrade kubernetes/talos/proxmox
 - Connect gpu so we can run gpu-related workloads
+- Right size my workloads
+- Install paperless-ngx
 - Install sonarr, radarr
 - Make sure static IPs for nginx,  plex
 - Figure out how to create namespaces with necessary labels since some of them dont work cause of talos
