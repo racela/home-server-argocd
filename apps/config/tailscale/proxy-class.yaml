@@ -1,0 +1,31 @@
+# The operator's own pod resources are set via operatorConfig.resources
+# in ../../argocd-apps/tailscale/application.yaml, but that doesn't cover
+# proxy pods the operator dynamically creates for each Connector/Service/
+# Ingress - those need a ProxyClass, referenced explicitly since
+# proxyConfig.defaultProxyClass does NOT apply to Connector resources
+# (confirmed via `kubectl explain`).
+apiVersion: tailscale.com/v1alpha1
+kind: ProxyClass
+metadata:
+  name: default-resources
+  namespace: tailscale
+spec:
+  statefulSet:
+    pod:
+      tailscaleContainer:
+        resources:
+          requests:
+            cpu: 10m
+            memory: 32Mi
+          limits:
+            memory: 64Mi
+      # This is the "sysctler" init container (enables IP forwarding for
+      # the subnet router) - confirmed via its functional description in
+      # the CRD schema, matching the live container name exactly.
+      tailscaleInitContainer:
+        resources:
+          requests:
+            cpu: 10m
+            memory: 16Mi
+          limits:
+            memory: 32Mi

@@ -15,6 +15,12 @@ spec:
           containers:
             - name: ping
               image: curlimages/curl:8.4.0
+              resources:
+                requests:
+                  cpu: 10m
+                  memory: 16Mi
+                limits:
+                  memory: 32Mi
               command:
                 - "curl"
               args:

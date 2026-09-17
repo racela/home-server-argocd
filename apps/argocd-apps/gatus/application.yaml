@@ -131,12 +131,15 @@ spec:
                 description: "healthcheck failed"
                 send-on-resolved: true
 
-          resources:
-           limits:
-             memory: 256Mi
-           requests:
-             cpu: 50m
-             memory: 128Mi
+        # Previously nested inside config: (gatus's own monitoring-config
+        # YAML), which is a no-op for pod resources - this chart's actual
+        # resources key is top-level. Values unchanged, just relocated.
+        resources:
+          limits:
+            memory: 256Mi
+          requests:
+            cpu: 50m
+            memory: 128Mi
 
   destination:
     server: https://kubernetes.default.svc

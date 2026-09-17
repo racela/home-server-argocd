@@ -46,6 +46,16 @@ spec:
               existingClaim: immich-library-pvc
         valkey:
           enabled: true
+          controllers:
+            main:
+              containers:
+                main:
+                  resources:
+                    requests:
+                      cpu: 25m
+                      memory: 64Mi
+                    limits:
+                      memory: 128Mi
           persistence:
             data:
               enabled: true
@@ -60,6 +70,15 @@ spec:
                   image:
                     repository: ghcr.io/immich-app/immich-server
                     pullPolicy: IfNotPresent
+                  # Observed steady-state ~786Mi (photo/thumbnail
+                  # processing) - request set close to that, limit gives
+                  # headroom for batch imports/video thumbnail bursts.
+                  resources:
+                    requests:
+                      cpu: 250m
+                      memory: 768Mi
+                    limits:
+                      memory: 1536Mi
           ingress:
             main:
               enabled: true
@@ -89,6 +108,16 @@ spec:
                   image:
                     repository: ghcr.io/immich-app/immich-machine-learning
                     pullPolicy: IfNotPresent
+                  # Observed steady-state ~269Mi, but CLIP/face-recognition
+                  # model loading and active inference can spike well
+                  # above that - limit sized generously to avoid OOM
+                  # during real use, not just idle.
+                  resources:
+                    requests:
+                      cpu: 250m
+                      memory: 512Mi
+                    limits:
+                      memory: 2Gi
                   env:
                     TRANSFORMERS_CACHE: /cache
                     HF_XET_CACHE: /cache/huggingface-xet

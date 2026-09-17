@@ -5,6 +5,7 @@ metadata:
   namespace: tailscale
 spec:
   hostname: local-subnet-router
+  proxyClass: default-resources
   subnetRouter:
     advertiseRoutes:
       - "192.168.1.0/24"

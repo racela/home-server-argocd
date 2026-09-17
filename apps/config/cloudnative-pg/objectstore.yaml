@@ -19,3 +19,9 @@ spec:
   retentionPolicy: 7d
   instanceSidecarConfiguration:
     retentionPolicyIntervalSeconds: 1800
+    resources:
+      requests:
+        cpu: 25m
+        memory: 64Mi
+      limits:
+        memory: 128Mi

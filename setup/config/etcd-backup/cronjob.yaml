@@ -27,6 +27,12 @@ spec:
                 - etcd
                 - snapshot
                 - /shared/etcd-snapshot.db
+              resources:
+                requests:
+                  cpu: 25m
+                  memory: 64Mi
+                limits:
+                  memory: 128Mi
               securityContext:
                 allowPrivilegeEscalation: false
                 capabilities:
@@ -49,6 +55,12 @@ spec:
                   restic -o s3.connections=15 init || true
                   restic -o s3.connections=15 backup /shared --tag etcd-snapshot --json
                   restic -o s3.connections=15 forget --keep-daily 7 --prune
+              resources:
+                requests:
+                  cpu: 100m
+                  memory: 128Mi
+                limits:
+                  memory: 256Mi
               securityContext:
                 allowPrivilegeEscalation: false
                 capabilities:

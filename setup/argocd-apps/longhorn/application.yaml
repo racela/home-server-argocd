@@ -17,6 +17,31 @@ spec:
             replicas: 1
           preUpgradeChecker:
             jobEnabled: false
+          # longhornDriver/longhornUI/engine-image/pre-pull-share-manager-image
+          # have no resources key exposed by this chart version (1.12.1) -
+          # a real chart limitation, not an oversight. instance-manager's
+          # CPU request already comes from defaultSettings.guaranteedInstanceManagerCPU
+          # below (12% of node CPU, matching the ~354m already observed
+          # live) - it has no equivalent memory setting, since usage
+          # scales with attached volume/replica count.
+          longhornManager:
+            resources:
+              requests:
+                cpu: 25m
+                memory: 128Mi
+              limits:
+                memory: 256Mi
+          defaultSettings:
+            systemManagedCSIComponentsResourceLimits: |-
+              {
+                "csi-attacher": {"requests":{"cpu":"10m","memory":"32Mi"},"limits":{"memory":"64Mi"}},
+                "csi-provisioner": {"requests":{"cpu":"10m","memory":"32Mi"},"limits":{"memory":"64Mi"}},
+                "csi-resizer": {"requests":{"cpu":"10m","memory":"32Mi"},"limits":{"memory":"64Mi"}},
+                "csi-snapshotter": {"requests":{"cpu":"10m","memory":"32Mi"},"limits":{"memory":"64Mi"}},
+                "longhorn-csi-plugin": {"requests":{"cpu":"25m","memory":"64Mi"},"limits":{"memory":"128Mi"}},
+                "node-driver-registrar": {"requests":{"cpu":"10m","memory":"32Mi"},"limits":{"memory":"64Mi"}},
+                "longhorn-liveness-probe": {"requests":{"cpu":"10m","memory":"32Mi"},"limits":{"memory":"64Mi"}}
+              }
   destination:
     server: https://kubernetes.default.svc
     namespace: longhorn-system

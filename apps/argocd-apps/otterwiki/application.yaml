@@ -29,21 +29,27 @@ spec:
           tls:
             - hosts:
                 - otterwiki.rafa.local
-              secretName: otterwiki-tls   
+              secretName: otterwiki-tls
 
-          resources: 
-            limits:
-              cpu: 100m
-              memory: 128Mi
-            requests:
-              cpu: 100m
-              memory: 128Mi
+        # resources/persistence were nested under ingress: above - a no-op
+        # for both, since this chart's actual schema has them as top-level
+        # keys. persistence "worked" only by coincidence: its enabled/size
+        # values matched this chart's own defaults, and longhorn happens
+        # to be this cluster's only/default StorageClass. Fixed to
+        # declare what's actually intended, not rely on default coincidence.
+        resources:
+          limits:
+            cpu: 100m
+            memory: 128Mi
+          requests:
+            cpu: 100m
+            memory: 128Mi
 
-          persistence:
-            enabled: true
-            storageClass: longhorn
-            size: 512Mi
-            accessMode: ReadWriteOnce
+        persistence:
+          enabled: true
+          storageClass: longhorn
+          size: 512Mi
+          accessMode: ReadWriteOnce
   destination:
     server: https://kubernetes.default.svc
     namespace: otterwiki

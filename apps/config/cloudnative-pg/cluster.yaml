@@ -30,6 +30,17 @@ spec:
   monitoring:
     enablePodMonitor: true
 
+  # Observed steady-state ~259Mi/9m - request set close to that, limit
+  # gives headroom for query bursts. No CPU limit: throttling Postgres
+  # under load causes worse problems (lock contention, latency spikes)
+  # than letting it use spare node capacity when available.
+  resources:
+    requests:
+      cpu: 250m
+      memory: 512Mi
+    limits:
+      memory: 1Gi
+
   plugins:
     - name: barman-cloud.cloudnative-pg.io
       isWALArchiver: true
