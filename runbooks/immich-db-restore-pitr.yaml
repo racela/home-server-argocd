@@ -1,0 +1,65 @@
+# Not synced by ArgoCD - this directory is intentionally outside every
+# Application's `path:`. Applying this creates a brand-new Cluster
+# (bootstrapped from the barman-cloud backup), it does NOT restore
+# in-place onto the live db-cluster.
+#
+# Usage:
+#   1. Pick the recovery target time. If you're restoring to pair with
+#      a specific restic snapshot of the immich library (see
+#      runbooks/immich-library-restore-job.yaml), use that snapshot's
+#      exact timestamp here - see
+#      runbooks/immich-disaster-recovery.md for why they must match.
+#      Otherwise omit recoveryTarget entirely to recover to the latest
+#      available WAL (i.e. as close to "now" as continuous archiving
+#      allows).
+#   2. Edit TARGET_TIME below (RFC 3339, e.g. "2026-09-17T19:00:03Z").
+#   3. kubectl apply -f runbooks/immich-db-restore-pitr.yaml
+#   4. kubectl get cluster db-cluster-restore -n cloudnative-pg -w
+#      until status shows Ready.
+#   5. Verify (see runbooks/immich-disaster-recovery.md), then either
+#      promote/cut over, or delete this Cluster when done:
+#      kubectl delete -f runbooks/immich-db-restore-pitr.yaml
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: db-cluster-restore
+  namespace: cloudnative-pg
+spec:
+  imageName: ghcr.io/tensorchord/cloudnative-vectorchord:16-0.3.0
+  instances: 1
+
+  postgresql:
+    shared_preload_libraries:
+      - 'vchord.so'
+
+  # New superuser secret - recovery bootstraps a new cluster, it can't
+  # reuse the live one's secret object identity.
+  superuserSecret:
+    name: cluster-superuser-secret
+
+  managed:
+    roles:
+      - name: immich
+        ensure: present
+        superuser: true
+        login: true
+        passwordSecret:
+          name: immich-db-user-secret
+
+  storage:
+    size: 5Gi
+    storageClass: longhorn
+
+  bootstrap:
+    recovery:
+      source: db-cluster-origin
+      recoveryTarget:
+        targetTime: "TARGET_TIME" # e.g. "2026-09-17T19:00:03Z" - see step 1 above
+
+  externalClusters:
+    - name: db-cluster-origin
+      plugin:
+        name: barman-cloud.cloudnative-pg.io
+        parameters:
+          barmanObjectName: b2-backup
+          serverName: db-cluster
