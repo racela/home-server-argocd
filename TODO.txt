@@ -1,6 +1,5 @@
 To do:
 - test restore
-- Create readme for this repo
 - Connect gpu so we can run gpu-related workloads
 - Install paperless-ngx
 - Install sonarr, radarr
