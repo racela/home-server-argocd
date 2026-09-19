@@ -22,8 +22,12 @@ spec:
                   set -e
                   restic -o s3.connections=15 unlock --remove-all || true
                   restic -o s3.connections=15 init || true
-                  restic -o s3.connections=15 backup /data --tag immich-library --json
-                  restic -o s3.connections=15 forget --keep-daily 7 --prune
+                  # Pod names are random, and restic records the hostname
+                  # per snapshot. Without a fixed --host, every snapshot
+                  # is in its own forget group (retention never prunes)
+                  # and has no parent (full re-scan every run).
+                  restic -o s3.connections=15 backup /data --host immich --tag immich-library --json
+                  restic -o s3.connections=15 forget --group-by paths --keep-daily 7 --prune
               # Higher than etcd-backup's equivalent job - scanning/
               # hashing a 150GB+ library needs more headroom than a
               # single small snapshot file.
