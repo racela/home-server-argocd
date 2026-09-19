@@ -53,8 +53,11 @@ spec:
                   set -e
                   restic -o s3.connections=15 unlock --remove-all || true
                   restic -o s3.connections=15 init || true
-                  restic -o s3.connections=15 backup /shared --tag etcd-snapshot --json
-                  restic -o s3.connections=15 forget --keep-daily 7 --prune
+                  # Fixed --host: pod names are random, and without it
+                  # every snapshot is in its own forget group so
+                  # retention never prunes anything.
+                  restic -o s3.connections=15 backup /shared --host etcd --tag etcd-snapshot --json
+                  restic -o s3.connections=15 forget --group-by paths --keep-daily 7 --prune
               resources:
                 requests:
                   cpu: 100m
