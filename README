@@ -1,5 +1,5 @@
 To do:
-- test restore, check official immich/cnpg/plex/home-assistant/k8s (for etcd) docs
+- test restore
 - Create readme for this repo
 - Connect gpu so we can run gpu-related workloads
 - Install paperless-ngx
