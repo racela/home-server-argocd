@@ -1,0 +1,70 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: actualbudget
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "4"
+spec:
+  project: default
+  source:
+    chart: actualbudget
+    repoURL: https://community-charts.github.io/helm-charts
+    targetRevision: 1.9.4
+    helm:
+      releaseName: actualbudget
+      values: |
+        replicaCount: 1
+        # Stop the old instance before attaching the data volume to its replacement.
+        strategy:
+          type: Recreate
+
+        serviceAccount:
+          automount: false
+
+        login:
+          method: password
+          allowedLoginMethods:
+            - password
+
+        persistence:
+          enabled: true
+          storageClass: longhorn
+          accessModes:
+            - ReadWriteOnce
+          size: 1Gi
+
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            memory: 512Mi
+
+        ingress:
+          enabled: true
+          className: nginx
+          annotations:
+            nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+            cert-manager.io/cluster-issuer: home-issuer
+            nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
+            # Match the server's largest default upload limit (encrypted sync).
+            nginx.ingress.kubernetes.io/proxy-body-size: "50m"
+          hosts:
+            - host: actualbudget.rafa.local
+              paths:
+                - path: /
+                  pathType: Prefix
+          tls:
+            - hosts:
+                - actualbudget.rafa.local
+              secretName: actualbudget-tls
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: actualbudget
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

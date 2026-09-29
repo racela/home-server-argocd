@@ -80,9 +80,16 @@ Applications (`apps/`):
 | Home Assistant | Home automation, config on Longhorn |
 | Gatus | Status monitoring with Discord alerts |
 | Otterwiki | Personal wiki |
+| Actual Budget | Personal budgeting; 1Gi data volume on Longhorn, HTTPS at `actualbudget.rafa.local` |
 | Tailscale operator | Remote access |
 
 `apps/argocd-apps/nintendo-museum-alerts` is currently commented out.
+
+Actual Budget uses the community-maintained `actualbudget` Helm chart.
+After syncing, open `https://actualbudget.rafa.local` from a device using
+the cluster's local DNS and trusting the home CA, then set the server
+password on first use. Its data persists across pod restarts; the volume
+is not yet enrolled in a recurring backup job.
 
 ## Secrets
 
