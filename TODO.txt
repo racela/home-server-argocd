@@ -1,5 +1,7 @@
 To do:
 - test restore
+- setup alerts for failed backups
+- move dns to raspberry pi
 - Connect gpu so we can run gpu-related workloads
 - Install paperless-ngx
 - Install sonarr, radarr
