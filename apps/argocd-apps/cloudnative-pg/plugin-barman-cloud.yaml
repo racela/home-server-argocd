@@ -10,7 +10,7 @@ spec:
   source:
     chart: plugin-barman-cloud
     repoURL: https://cloudnative-pg.github.io/charts
-    targetRevision: 0.8.0
+    targetRevision: 0.8.1
     helm:
       releaseName: plugin-barman-cloud
       values: |
