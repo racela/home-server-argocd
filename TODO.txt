@@ -1,10 +1,12 @@
 To do:
 - test restore
+- install n8n
+- setup automations for: bank transactions to actual, backups, PRs
+- move discord alerts to telegram
 - setup alerts for failed backups
 - move dns to raspberry pi
 - Connect gpu so we can run gpu-related workloads
 - Install paperless-ngx
-- Install sonarr, radarr
 - Make sure static IPs for nginx,  plex
 - Buy UPS and setup shutdown process, auto turn on when power is back
 - Buy additional drives, setup RAID and local backup apart from B2
