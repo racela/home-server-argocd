@@ -2,6 +2,7 @@ To do:
 - test restore
 - move dns to raspberry pi
 - Connect gpu so we can run gpu-related workloads
+- Smart home: water sensor for plant, vacuum, humidity sensor
 - Install paperless-ngx
 - Make sure static IPs for nginx,  plex
 - Buy UPS and setup shutdown process, auto turn on when power is back
