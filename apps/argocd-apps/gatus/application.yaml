@@ -15,11 +15,16 @@ spec:
       releaseName: gatus
       values: |
         env:
-          DISCORD_WEBHOOK_URL:
+          TELEGRAM_BOT_TOKEN:
             valueFrom:
               secretKeyRef:
-                name: discord-webhook
-                key: DISCORD_WEBHOOK_URL
+                name: telegram-alerts
+                key: TELEGRAM_BOT_TOKEN
+          TELEGRAM_CHAT_ID:
+            valueFrom:
+              secretKeyRef:
+                name: telegram-alerts
+                key: TELEGRAM_CHAT_ID
         ingress:
           enabled: true
           annotations:
@@ -38,8 +43,9 @@ spec:
         config:
           metrics: true
           alerting:
-            discord:
-              webhook-url: "${DISCORD_WEBHOOK_URL}"
+            telegram:
+              token: "${TELEGRAM_BOT_TOKEN}"
+              id: "${TELEGRAM_CHAT_ID}"
           endpoints:
             - name: Plex
               group: media
@@ -48,7 +54,7 @@ spec:
               conditions:
                 - "[STATUS] == 200"
               alerts:
-              - type: discord
+              - type: telegram
                 description: "healthcheck failed"
                 send-on-resolved: true
 
@@ -59,7 +65,7 @@ spec:
               conditions:
                 - "[STATUS] == 200"
               alerts:
-              - type: discord
+              - type: telegram
                 description: "healthcheck failed"
                 send-on-resolved: true
 
@@ -70,7 +76,7 @@ spec:
               conditions:
                 - "[STATUS] == 200"
               alerts:
-              - type: discord
+              - type: telegram
                 description: "healthcheck failed"
                 send-on-resolved: true
 
@@ -81,7 +87,7 @@ spec:
               conditions:
                 - "[STATUS] == 200"
               alerts:
-              - type: discord
+              - type: telegram
                 description: "healthcheck failed"
                 send-on-resolved: true
 
@@ -94,7 +100,7 @@ spec:
               conditions:
                 - "[STATUS] == 200"
               alerts:
-              - type: discord
+              - type: telegram
                 description: "healthcheck failed"
                 send-on-resolved: true
 
@@ -108,7 +114,7 @@ spec:
               conditions:
                 - "[DNS_RCODE] == NOERROR"
               alerts:
-              - type: discord
+              - type: telegram
                 description: "healthcheck failed"
                 send-on-resolved: true
 
@@ -119,7 +125,7 @@ spec:
               conditions:
                 - "[STATUS] == 200"
               alerts:
-              - type: discord
+              - type: telegram
                 description: "healthcheck failed"
                 send-on-resolved: true
 
@@ -130,7 +136,7 @@ spec:
               conditions:
                 - "[STATUS] == 200"
               alerts:
-              - type: discord
+              - type: telegram
                 description: "healthcheck failed"
                 send-on-resolved: true
 
