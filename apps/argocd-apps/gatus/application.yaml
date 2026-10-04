@@ -25,16 +25,6 @@ spec:
               secretKeyRef:
                 name: telegram-alerts
                 key: TELEGRAM_CHAT_ID
-          GATUS_IMMICH_BACKUP_TOKEN:
-            valueFrom:
-              secretKeyRef:
-                name: backup-reporting
-                key: GATUS_IMMICH_BACKUP_TOKEN
-          GATUS_ETCD_BACKUP_TOKEN:
-            valueFrom:
-              secretKeyRef:
-                name: backup-reporting
-                key: GATUS_ETCD_BACKUP_TOKEN
         ingress:
           enabled: true
           annotations:
@@ -56,31 +46,6 @@ spec:
             telegram:
               token: "${TELEGRAM_BOT_TOKEN}"
               id: "${TELEGRAM_CHAT_ID}"
-          external-endpoints:
-            - name: immich-library
-              group: backups
-              token: "${GATUS_IMMICH_BACKUP_TOKEN}"
-              # Daily at 03:00 Asia/Manila, plus six hours of grace.
-              heartbeat:
-                interval: 30h
-              alerts:
-                - type: telegram
-                  description: "Backup/upload/retention failed or no report received for 30 hours"
-                  failure-threshold: 1
-                  success-threshold: 1
-                  send-on-resolved: true
-            - name: etcd-snapshot
-              group: backups
-              token: "${GATUS_ETCD_BACKUP_TOKEN}"
-              # Daily at 03:00 Asia/Manila, plus six hours of grace.
-              heartbeat:
-                interval: 30h
-              alerts:
-                - type: telegram
-                  description: "Backup/upload/retention failed or no report received for 30 hours"
-                  failure-threshold: 1
-                  success-threshold: 1
-                  send-on-resolved: true
           endpoints:
             - name: Plex
               group: media

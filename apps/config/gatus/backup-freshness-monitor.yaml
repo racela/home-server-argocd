@@ -1,0 +1,277 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: backup-freshness-monitor
+  namespace: gatus
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: backup-freshness-reader
+  namespace: immich
+rules:
+- apiGroups:
+  - batch
+  resources:
+  - cronjobs
+  resourceNames:
+  - immich-library-backup
+  verbs:
+  - get
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: backup-freshness-reader
+  namespace: immich
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: backup-freshness-reader
+subjects:
+- kind: ServiceAccount
+  name: backup-freshness-monitor
+  namespace: gatus
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: backup-freshness-reader
+  namespace: etcd-backup
+rules:
+- apiGroups:
+  - batch
+  resources:
+  - cronjobs
+  resourceNames:
+  - etcd-snapshot-backup
+  verbs:
+  - get
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: backup-freshness-reader
+  namespace: etcd-backup
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: backup-freshness-reader
+subjects:
+- kind: ServiceAccount
+  name: backup-freshness-monitor
+  namespace: gatus
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: backup-notification-state
+  namespace: gatus
+rules:
+- apiGroups:
+  - ''
+  resources:
+  - configmaps
+  resourceNames:
+  - backup-notification-state
+  verbs:
+  - get
+  - update
+- apiGroups:
+  - ''
+  resources:
+  - configmaps
+  verbs:
+  - create
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: backup-notification-state
+  namespace: gatus
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: backup-notification-state
+subjects:
+- kind: ServiceAccount
+  name: backup-freshness-monitor
+  namespace: gatus
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: backup-freshness-script
+  namespace: gatus
+data:
+  monitor.py: |
+    import datetime as dt
+    import json
+    import os
+    import ssl
+    import time
+    import urllib.error
+    import urllib.request
+    from pathlib import Path
+
+    TARGETS = [('immich', 'immich-library-backup'), ('etcd-backup', 'etcd-snapshot-backup')]
+    MAX_AGE = dt.timedelta(hours=30)
+    STATE_PATH = '/api/v1/namespaces/gatus/configmaps/backup-notification-state'
+
+
+    def kube(path, method='GET', body=None):
+        token = Path('/var/run/secrets/kubernetes.io/serviceaccount/token').read_text().strip()
+        context = ssl.create_default_context(cafile='/var/run/secrets/kubernetes.io/serviceaccount/ca.crt')
+        request = urllib.request.Request('https://kubernetes.default.svc' + path,
+            data=None if body is None else json.dumps(body).encode(), method=method,
+            headers={'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json'})
+        with urllib.request.urlopen(request, context=context, timeout=20) as response:
+            return json.load(response)
+
+
+    def send(text):
+        body = json.dumps({'chat_id': os.environ['TELEGRAM_CHAT_ID'], 'text': text}).encode()
+        for attempt in range(3):
+            try:
+                request = urllib.request.Request(
+                    'https://api.telegram.org/bot' + os.environ['TELEGRAM_BOT_TOKEN'] + '/sendMessage',
+                    data=body, headers={'Content-Type': 'application/json'})
+                with urllib.request.urlopen(request, timeout=15) as response:
+                    if json.load(response).get('ok') is True:
+                        return
+            except Exception:
+                # HTTP exception text can include the bot token in the URL.
+                pass
+            if attempt < 2:
+                time.sleep(2)
+        raise RuntimeError('Telegram notification delivery failed')
+
+
+    def load_state():
+        try:
+            return kube(STATE_PATH)
+        except urllib.error.HTTPError as exc:
+            if exc.code != 404:
+                raise
+            # Runtime-owned: not reconciled by ArgoCD, so state survives syncs/restarts.
+            return kube('/api/v1/namespaces/gatus/configmaps', 'POST', {
+                'apiVersion': 'v1', 'kind': 'ConfigMap',
+                'metadata': {'name': 'backup-notification-state', 'namespace': 'gatus'},
+                'data': {}})
+
+
+    def transition(state, key, status, message):
+        previous = state.setdefault('data', {}).get(key)
+        if previous == status:
+            return state
+        if status != 'healthy' or previous is not None:
+            send(message)
+        # Only suppress future alerts after Telegram acknowledges delivery.
+        state['data'][key] = status
+        return kube(STATE_PATH, 'PUT', state)
+
+
+    def check_target(namespace, name, now):
+        job = kube(f'/apis/batch/v1/namespaces/{namespace}/cronjobs/{name}')
+        last = job.get('status', {}).get('lastSuccessfulTime')
+        if not last:
+            return 'overdue', f'{namespace}/{name}: no successful backup recorded.'
+        timestamp = dt.datetime.fromisoformat(last.replace('Z', '+00:00'))
+        age = now - timestamp
+        if age < dt.timedelta(0):
+            raise ValueError('Last-success timestamp is in the future')
+        if age > MAX_AGE:
+            return 'overdue', f'{namespace}/{name}: last successful backup {age.total_seconds()/3600:.1f} hours ago (limit: 30h).'
+        return 'healthy', f'{namespace}/{name}: backup freshness recovered; last success {last}.'
+
+
+    def main():
+        state = load_state()
+        failed = False
+        now = dt.datetime.now(dt.timezone.utc)
+        for namespace, name in TARGETS:
+            key = namespace + '.' + name
+            try:
+                status, message = check_target(namespace, name, now)
+            except Exception as exc:
+                failed = True
+                # Keep prior freshness status; an API outage must not clear an overdue alert.
+                state = transition(state, key + '.monitor', 'error',
+                    f'Backup monitor cannot check {namespace}/{name} ({type(exc).__name__}).')
+                continue
+            state = transition(state, key, status, message)
+            state = transition(state, key + '.monitor', 'healthy',
+                f'Backup monitor can check {namespace}/{name} again.')
+            print(f'{namespace}/{name}: {status}', flush=True)
+        return 1 if failed else 0
+
+
+    if __name__ == '__main__':
+        try:
+            raise SystemExit(main())
+        except Exception as exc:
+            print(f'Backup monitor failed ({type(exc).__name__}); inspect Kubernetes/Telegram connectivity.', flush=True)
+            raise SystemExit(1)
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: backup-freshness-monitor
+  namespace: gatus
+spec:
+  schedule: 0 * * * *
+  concurrencyPolicy: Forbid
+  startingDeadlineSeconds: 600
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 1
+      activeDeadlineSeconds: 300
+      template:
+        spec:
+          serviceAccountName: backup-freshness-monitor
+          restartPolicy: Never
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 65534
+            seccompProfile:
+              type: RuntimeDefault
+          containers:
+          - name: monitor
+            image: python:3.13-alpine
+            command:
+            - python
+            - -B
+            - /app/monitor.py
+            resources:
+              requests:
+                cpu: 10m
+                memory: 32Mi
+              limits:
+                memory: 64Mi
+            securityContext:
+              allowPrivilegeEscalation: false
+              readOnlyRootFilesystem: true
+              capabilities:
+                drop:
+                - ALL
+            env:
+            - name: TELEGRAM_BOT_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: telegram-alerts
+                  key: TELEGRAM_BOT_TOKEN
+            - name: TELEGRAM_CHAT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: telegram-alerts
+                  key: TELEGRAM_CHAT_ID
+            volumeMounts:
+            - name: script
+              mountPath: /app
+              readOnly: true
+          volumes:
+          - name: script
+            configMap:
+              name: backup-freshness-script
