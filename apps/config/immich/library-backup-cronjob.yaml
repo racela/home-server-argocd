@@ -20,6 +20,30 @@ spec:
                 - -c
                 - |
                   set -e
+                  # Preserve the backup exit status even if notification delivery fails.
+                  report_backup() {
+                    result=$?
+                    trap - EXIT HUP INT TERM
+                    success=false
+                    [ "$result" -eq 0 ] && success=true
+                    attempt=1
+                    while [ "$attempt" -le 3 ]; do
+                      if wget -q -T 10 -O /dev/null --post-data='' \
+                        --header="Authorization: Bearer ${GATUS_BACKUP_TOKEN}" \
+                        "${GATUS_BACKUP_URL}?success=${success}&error=backup-or-retention-exit-${result}"; then
+                        echo "Backup status reported to Gatus: success=${success}"
+                        exit "$result"
+                      fi
+                      attempt=$((attempt + 1))
+                      [ "$attempt" -gt 3 ] || sleep 2
+                    done
+                    echo "WARNING: Could not report backup status to Gatus" >&2
+                    exit "$result"
+                  }
+                  trap report_backup EXIT
+                  trap 'exit 129' HUP
+                  trap 'exit 130' INT
+                  trap 'exit 143' TERM
                   restic -o s3.connections=15 unlock --remove-all || true
                   restic -o s3.connections=15 init || true
                   # Pod names are random, and restic records the hostname
@@ -38,6 +62,13 @@ spec:
                 limits:
                   memory: 512Mi
               env:
+                - name: GATUS_BACKUP_URL
+                  value: "http://gatus.gatus.svc.cluster.local/api/v1/endpoints/backups_immich-library/external"
+                - name: GATUS_BACKUP_TOKEN
+                  valueFrom:
+                    secretKeyRef:
+                      name: gatus-backup-reporting
+                      key: token
                 - name: RESTIC_REPOSITORY
                   value: "s3:https://s3.us-west-004.backblazeb2.com/rafa-home-server-backups/immich/"
                 - name: AWS_ACCESS_KEY_ID
