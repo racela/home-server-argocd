@@ -1,9 +1,5 @@
 To do:
 - test restore
-- install n8n
-- setup automations for: bank transactions to actual, backups, PRs
-- move discord alerts to telegram
-- setup alerts for failed backups
 - move dns to raspberry pi
 - Connect gpu so we can run gpu-related workloads
 - Install paperless-ngx
