@@ -1,0 +1,17 @@
+name: Validate backup notifications
+on:
+  pull_request:
+    paths:
+      - apps/config/gatus/backup-freshness-monitor.yaml
+      - apps/config/immich/library-backup-cronjob.yaml
+      - setup/config/etcd-backup/cronjob.yaml
+      - tests/test_backup_notifications.py
+      - .github/workflows/backup-notifications.yml
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - run: python3 -m pip install PyYAML==6.0.2
+      - run: python3 -m unittest discover -s tests -v

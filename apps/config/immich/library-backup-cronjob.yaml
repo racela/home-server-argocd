@@ -20,6 +20,36 @@ spec:
                 - -c
                 - |
                   set -e
+                  started_at=$(date +%s)
+                  # Notify after backup AND retention; never mask the backup exit status.
+                  report_backup() {
+                    result=$?
+                    trap - EXIT HUP INT TERM
+                    elapsed=$(( $(date +%s) - started_at ))
+                    outcome="FAILED (exit ${result})"
+                    [ "$result" -ne 0 ] || outcome="SUCCEEDED"
+                    # Labels are static; the remaining message fields are numeric.
+                    payload=$(printf '{"chat_id":"%s","text":"Immich library backup %s. Duration: %ss. Backup and retention attempt completed."}' \
+                      "$TELEGRAM_CHAT_ID" "$outcome" "$elapsed")
+                    attempt=1
+                    while [ "$attempt" -le 3 ]; do
+                      if response=$(wget -q -T 10 -O - \
+                        --header='Content-Type: application/json' --post-data="$payload" \
+                        "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" 2>/dev/null) && \
+                        printf '%s' "$response" | grep -Eq '"ok"[[:space:]]*:[[:space:]]*true'; then
+                        echo "Telegram backup notification delivered"
+                        exit "$result"
+                      fi
+                      attempt=$((attempt + 1))
+                      [ "$attempt" -gt 3 ] || sleep 2
+                    done
+                    echo "WARNING: Telegram notification delivery failed" >&2
+                    exit "$result"
+                  }
+                  trap report_backup EXIT
+                  trap 'exit 129' HUP
+                  trap 'exit 130' INT
+                  trap 'exit 143' TERM
                   restic -o s3.connections=15 unlock --remove-all || true
                   restic -o s3.connections=15 init || true
                   # Pod names are random, and restic records the hostname
@@ -38,6 +68,16 @@ spec:
                 limits:
                   memory: 512Mi
               env:
+                - name: TELEGRAM_BOT_TOKEN
+                  valueFrom:
+                    secretKeyRef:
+                      name: backup-telegram
+                      key: TELEGRAM_BOT_TOKEN
+                - name: TELEGRAM_CHAT_ID
+                  valueFrom:
+                    secretKeyRef:
+                      name: backup-telegram
+                      key: TELEGRAM_CHAT_ID
                 - name: RESTIC_REPOSITORY
                   value: "s3:https://s3.us-west-004.backblazeb2.com/rafa-home-server-backups/immich/"
                 - name: AWS_ACCESS_KEY_ID
