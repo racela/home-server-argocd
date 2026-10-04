@@ -23,6 +23,30 @@ def monitor():
 
 
 class FreshnessTests(unittest.TestCase):
+    def test_state_read_or_create_failure_sends_alert(self):
+        for operation in ['read', 'create']:
+            with self.subTest(operation=operation):
+                m = monitor()
+                forbidden = m.urllib.error.HTTPError('https://secret-url', 403, 'forbidden', {}, None)
+                missing = m.urllib.error.HTTPError('https://secret-url', 404, 'missing', {}, None)
+                errors = [forbidden] if operation == 'read' else [missing, forbidden]
+                with patch.object(m, 'kube', side_effect=errors), patch.object(m, 'send') as send, patch.object(m, 'check_target') as check:
+                    self.assertEqual(m.main(), 1)
+                    send.assert_called_once()
+                    message = send.call_args.args[0]
+                    self.assertIn('no backup freshness checks were performed', message)
+                    self.assertNotIn('secret-url', message)
+                    check.assert_not_called()
+                forbidden.close()
+                missing.close()
+
+    def test_state_failure_and_telegram_failure_still_exit_unsuccessfully(self):
+        m = monitor()
+        with patch.object(m, 'load_state', side_effect=TimeoutError), patch.object(m, 'send', side_effect=RuntimeError('delivery failed')) as send, patch.object(m, 'check_target') as check:
+            self.assertEqual(m.main(), 1)
+            send.assert_called_once()
+            check.assert_not_called()
+
     def test_age_and_missing_success(self):
         m = monitor()
         now = dt.datetime(2026, 10, 4, tzinfo=dt.timezone.utc)

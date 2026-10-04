@@ -186,7 +186,19 @@ data:
 
 
     def main():
-        state = load_state()
+        try:
+            state = load_state()
+        except Exception as exc:
+            message = ('Backup freshness monitor cannot load or initialize its alert state '
+                       f'({type(exc).__name__}); no backup freshness checks were performed.')
+            print(message, flush=True)
+            # No durable state is available to suppress duplicates: notify each failed run.
+            # Do not include exception details, which can contain credentials or URLs.
+            try:
+                send(message)
+            except Exception:
+                print('State failure notification could not be delivered to Telegram.', flush=True)
+            return 1
         failed = False
         now = dt.datetime.now(dt.timezone.utc)
         for namespace, name in TARGETS:
