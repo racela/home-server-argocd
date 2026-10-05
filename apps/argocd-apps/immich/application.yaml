@@ -84,6 +84,11 @@ spec:
               enabled: true
               annotations:
                 gethomepage.dev/enabled: "true"
+                gethomepage.dev/widget.type: "immich"
+                gethomepage.dev/widget.url: "http://immich-server.immich.svc.cluster.local:2283"
+                gethomepage.dev/widget.key: "{{ `{{HOMEPAGE_VAR_IMMICH_KEY}}` }}"
+                gethomepage.dev/widget.version: "2"
+                gethomepage.dev/widget.fields: "[\"photos\", \"videos\", \"storage\", \"users\"]"
                 gethomepage.dev/name: "Immich"
                 gethomepage.dev/group: "Media"
                 gethomepage.dev/icon: "immich.png"
