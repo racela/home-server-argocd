@@ -34,6 +34,10 @@ spec:
           enabled: true
           annotations:
             gethomepage.dev/enabled: "true"
+            gethomepage.dev/widget.type: "homeassistant"
+            gethomepage.dev/widget.url: "http://home-assistant.home-assistant.svc.cluster.local:8080"
+            gethomepage.dev/widget.key: "{{HOMEPAGE_VAR_HOMEASSISTANT_TOKEN}}"
+            gethomepage.dev/widget.fields: "[\"people_home\", \"lights_on\", \"switches_on\"]"
             gethomepage.dev/name: "Home Assistant"
             gethomepage.dev/group: "Applications"
             gethomepage.dev/icon: "home-assistant.png"

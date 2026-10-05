@@ -5,6 +5,11 @@ metadata:
   namespace: plex
   annotations:
     gethomepage.dev/enabled: "true"
+    gethomepage.dev/widget.type: "deluge"
+    gethomepage.dev/widget.url: "http://deluge.plex.svc.cluster.local:8112"
+    gethomepage.dev/widget.password: "{{HOMEPAGE_VAR_DELUGE_PASSWORD}}"
+    gethomepage.dev/widget.fields: "[\"leech\", \"download\", \"seed\", \"upload\"]"
+    gethomepage.dev/widget.enableLeechProgress: "true"
     gethomepage.dev/name: "Deluge"
     gethomepage.dev/group: "Media"
     gethomepage.dev/icon: "deluge.png"
