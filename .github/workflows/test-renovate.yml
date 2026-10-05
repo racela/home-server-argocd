@@ -163,6 +163,10 @@ jobs:
             - charts
           chart-repos: []
           check-version-increment: false
+          # Test the published package that ArgoCD installs. Dependencies are
+          # already bundled; rebuilding can fail on stale upstream lock files
+          # (for example actualbudget 1.9.4, which has no dependencies).
+          skip-helm-dependencies: true
           debug: true
           EOF
 

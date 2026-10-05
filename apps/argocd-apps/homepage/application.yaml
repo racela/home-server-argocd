@@ -96,7 +96,6 @@ spec:
               Media:
               Operations:
               Infrastructure:
-              Kubernetes:
           widgets:
             - kubernetes:
                 cluster:
@@ -126,84 +125,6 @@ spec:
                     namespace: cloudnative-pg
                     app: cloudnativepg
                     podSelector: app.kubernetes.io/name=cloudnative-pg
-                - PostgreSQL:
-                    icon: postgres.png
-                    description: Immich database
-                    namespace: cloudnative-pg
-                    app: postgresql
-                    podSelector: cnpg.io/cluster=db-cluster
-                - Barman Cloud:
-                    description: PostgreSQL backup plugin
-                    namespace: cloudnative-pg
-                    app: barman-cloud
-                    podSelector: app.kubernetes.io/name=plugin-barman-cloud
-                - Tailscale:
-                    icon: tailscale.png
-                    description: Operator and subnet router
-                    namespace: tailscale
-                    app: tailscale
-                    podSelector: ""
-                - cert-manager:
-                    icon: cert-manager.png
-                    description: Certificate automation
-                    namespace: cert-manager
-                    app: cert-manager
-                    podSelector: app.kubernetes.io/instance=cert-manager
-                - ingress-nginx:
-                    icon: nginx.png
-                    description: HTTP and HTTPS ingress
-                    namespace: ingress-nginx
-                    app: ingress-nginx
-                    podSelector: app.kubernetes.io/instance=ingress-nginx
-                - MetalLB:
-                    icon: metallb.png
-                    description: Load balancer addresses
-                    namespace: metallb-system
-                    app: metallb
-                    podSelector: app.kubernetes.io/instance=metallb
-                - NFS CSI:
-                    description: NFS storage driver
-                    namespace: kube-system
-                    app: nfs-csi
-                    podSelector: app.kubernetes.io/name=csi-driver-nfs
-                - Sealed Secrets:
-                    icon: sealed-secrets.png
-                    description: Secret decryption controller
-                    namespace: kube-system
-                    app: sealed-secrets
-                    podSelector: app.kubernetes.io/name=sealed-secrets
-                - metrics-server:
-                    description: Kubernetes resource metrics
-                    namespace: kube-system
-                    app: metrics-server
-                    podSelector: app.kubernetes.io/name=metrics-server
-                - etcd Backups:
-                    description: Scheduled snapshots; see Argo CD and Gatus for job results
-                    href: https://argo.rafa.local/applications/argocd/etcd-backup
-            - Kubernetes:
-                - Control Plane:
-                    icon: kubernetes.png
-                    namespace: kube-system
-                    app: control-plane
-                    podSelector: tier=control-plane
-                - CoreDNS:
-                    icon: coredns.png
-                    namespace: kube-system
-                    app: coredns
-                    podSelector: k8s-app=kube-dns
-                - Canal:
-                    description: Pod networking and Calico controllers
-                    namespace: kube-system
-                    app: canal
-                    podSelector: k8s-app in (canal,calico-kube-controllers)
-                - kube-proxy:
-                    namespace: kube-system
-                    app: kube-proxy
-                    podSelector: k8s-app=kube-proxy
-                - Kubelet Serving Cert Approver:
-                    namespace: kubelet-serving-cert-approver
-                    app: kubelet-serving-cert-approver
-                    podSelector: app.kubernetes.io/name=kubelet-serving-cert-approver
 
   destination:
     server: https://kubernetes.default.svc

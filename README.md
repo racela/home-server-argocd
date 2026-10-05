@@ -119,11 +119,11 @@ gethomepage.dev/pod-selector: app.kubernetes.io/name=my-app
 Homepage derives the URL and namespace from the ingress. Use a selector
 matching the actual pod labels; an empty selector intentionally includes
 all pods in that namespace (used for Longhorn). Static `config.services`
-entries cover infrastructure without ingresses, with `namespace`, `app`
-and `podSelector` enabling pod status and CPU/memory metrics. Kubernetes
-bootstrap components seen in the live cluster are included too. Future
-workloads without ingresses need a static entry; unannotated ingresses
-are not automatically displayed.
+entries cover Blocky and CloudNativePG, with `namespace`, `app` and
+`podSelector` enabling pod status and CPU/memory metrics. The Kubernetes
+widget shows cluster and node metrics separately. Additional workloads
+without ingresses need a static entry; unannotated ingresses are not
+automatically displayed.
 
 Scheduled backups are monitored through Gatus and ArgoCD rather than
 presenting completed Job pods as continuously running services. The
