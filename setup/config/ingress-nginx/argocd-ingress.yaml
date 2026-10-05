@@ -4,6 +4,12 @@ metadata:
   name: argocd-server-ingress
   namespace: argocd
   annotations:
+    gethomepage.dev/enabled: "true"
+    gethomepage.dev/name: "Argo CD"
+    gethomepage.dev/group: "Operations"
+    gethomepage.dev/icon: "argo-cd.png"
+    gethomepage.dev/description: "GitOps controller"
+    gethomepage.dev/pod-selector: "app.kubernetes.io/part-of=argocd"
     # Use the nginx ingress controller
     kubernetes.io/ingress.class: "nginx"
     # Redirect HTTP → HTTPS

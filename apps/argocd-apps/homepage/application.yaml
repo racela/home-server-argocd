@@ -1,0 +1,216 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: homepage
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "5"
+spec:
+  project: default
+  source:
+    chart: homepage
+    repoURL: https://jameswynn.github.io/helm-charts
+    targetRevision: 2.1.0
+    helm:
+      releaseName: homepage
+      values: |
+        image:
+          repository: ghcr.io/gethomepage/homepage
+          # The chart defaults to v1.2.0; pin the current stable application.
+          tag: v2.4.0
+          pullPolicy: IfNotPresent
+
+        enableRbac: true
+        serviceAccount:
+          create: true
+          name: homepage
+
+        # Common-library chart values; keep the pod compatible with Talos PSA.
+        podSecurityContext:
+          runAsNonRoot: true
+          runAsUser: 1000
+          runAsGroup: 1000
+          fsGroup: 1000
+          seccompProfile:
+            type: RuntimeDefault
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+              - ALL
+
+        env:
+          - name: TZ
+            value: Asia/Manila
+          - name: MY_POD_IP
+            valueFrom:
+              fieldRef:
+                fieldPath: status.podIP
+          - name: HOMEPAGE_ALLOWED_HOSTS
+            value: "homepage.rafa.local,$(MY_POD_IP):3000"
+
+        resources:
+          requests:
+            cpu: 50m
+            memory: 128Mi
+          limits:
+            memory: 512Mi
+
+        ingress:
+          main:
+            enabled: true
+            ingressClassName: nginx
+            annotations:
+              nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+              cert-manager.io/cluster-issuer: home-issuer
+              nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
+              gethomepage.dev/enabled: "true"
+              gethomepage.dev/name: Homepage
+              gethomepage.dev/group: Operations
+              gethomepage.dev/icon: homepage.png
+              gethomepage.dev/description: Home cluster dashboard
+              gethomepage.dev/pod-selector: app.kubernetes.io/name=homepage
+            hosts:
+              - host: homepage.rafa.local
+                paths:
+                  - path: /
+                    pathType: Prefix
+            tls:
+              - hosts:
+                  - homepage.rafa.local
+                secretName: homepage-tls
+
+        config:
+          kubernetes:
+            mode: cluster
+            ingress: true
+            gateway: false
+            traefik: false
+          bookmarks: []
+          settingsString: |
+            title: Rafa's Home Server
+            headerStyle: boxed
+            statusStyle: dot
+            layout:
+              Applications:
+              Media:
+              Operations:
+              Infrastructure:
+              Kubernetes:
+          widgets:
+            - kubernetes:
+                cluster:
+                  show: true
+                  cpu: true
+                  memory: true
+                  showLabel: true
+                  label: home-server
+                nodes:
+                  show: true
+                  cpu: true
+                  memory: true
+                  showLabel: true
+          # Web apps are discovered from their Ingress annotations. These
+          # workloads have no ingress; use pod selectors for status/metrics.
+          services:
+            - Infrastructure:
+                - Blocky:
+                    icon: blocky.png
+                    description: Local DNS and ad blocking
+                    namespace: blocky
+                    app: blocky
+                    podSelector: app=blocky
+                - CloudNativePG:
+                    icon: cloudnative-pg.png
+                    description: PostgreSQL operator
+                    namespace: cloudnative-pg
+                    app: cloudnativepg
+                    podSelector: app.kubernetes.io/name=cloudnative-pg
+                - PostgreSQL:
+                    icon: postgres.png
+                    description: Immich database
+                    namespace: cloudnative-pg
+                    app: postgresql
+                    podSelector: cnpg.io/cluster=db-cluster
+                - Barman Cloud:
+                    description: PostgreSQL backup plugin
+                    namespace: cloudnative-pg
+                    app: barman-cloud
+                    podSelector: app.kubernetes.io/name=plugin-barman-cloud
+                - Tailscale:
+                    icon: tailscale.png
+                    description: Operator and subnet router
+                    namespace: tailscale
+                    app: tailscale
+                    podSelector: ""
+                - cert-manager:
+                    icon: cert-manager.png
+                    description: Certificate automation
+                    namespace: cert-manager
+                    app: cert-manager
+                    podSelector: app.kubernetes.io/instance=cert-manager
+                - ingress-nginx:
+                    icon: nginx.png
+                    description: HTTP and HTTPS ingress
+                    namespace: ingress-nginx
+                    app: ingress-nginx
+                    podSelector: app.kubernetes.io/instance=ingress-nginx
+                - MetalLB:
+                    icon: metallb.png
+                    description: Load balancer addresses
+                    namespace: metallb-system
+                    app: metallb
+                    podSelector: app.kubernetes.io/instance=metallb
+                - NFS CSI:
+                    description: NFS storage driver
+                    namespace: kube-system
+                    app: nfs-csi
+                    podSelector: app.kubernetes.io/name=csi-driver-nfs
+                - Sealed Secrets:
+                    icon: sealed-secrets.png
+                    description: Secret decryption controller
+                    namespace: kube-system
+                    app: sealed-secrets
+                    podSelector: app.kubernetes.io/name=sealed-secrets
+                - metrics-server:
+                    description: Kubernetes resource metrics
+                    namespace: kube-system
+                    app: metrics-server
+                    podSelector: app.kubernetes.io/name=metrics-server
+                - etcd Backups:
+                    description: Scheduled snapshots; see Argo CD and Gatus for job results
+                    href: https://argo.rafa.local/applications/argocd/etcd-backup
+            - Kubernetes:
+                - Control Plane:
+                    icon: kubernetes.png
+                    namespace: kube-system
+                    app: control-plane
+                    podSelector: tier=control-plane
+                - CoreDNS:
+                    icon: coredns.png
+                    namespace: kube-system
+                    app: coredns
+                    podSelector: k8s-app=kube-dns
+                - Canal:
+                    description: Pod networking and Calico controllers
+                    namespace: kube-system
+                    app: canal
+                    podSelector: k8s-app in (canal,calico-kube-controllers)
+                - kube-proxy:
+                    namespace: kube-system
+                    app: kube-proxy
+                    podSelector: k8s-app=kube-proxy
+                - Kubelet Serving Cert Approver:
+                    namespace: kubelet-serving-cert-approver
+                    app: kubelet-serving-cert-approver
+                    podSelector: app.kubernetes.io/name=kubelet-serving-cert-approver
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: homepage
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

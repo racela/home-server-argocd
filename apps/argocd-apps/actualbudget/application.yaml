@@ -45,6 +45,12 @@ spec:
           enabled: true
           className: nginx
           annotations:
+            gethomepage.dev/enabled: "true"
+            gethomepage.dev/name: "Actual Budget"
+            gethomepage.dev/group: "Applications"
+            gethomepage.dev/icon: "actual-budget.png"
+            gethomepage.dev/description: "Personal budgeting"
+            gethomepage.dev/pod-selector: "app.kubernetes.io/instance=actualbudget"
             nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
             cert-manager.io/cluster-issuer: home-issuer
             nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
