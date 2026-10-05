@@ -4,6 +4,12 @@ metadata:
   name: longhorn-ingress
   namespace: longhorn-system
   annotations:
+    gethomepage.dev/enabled: "true"
+    gethomepage.dev/name: "Longhorn"
+    gethomepage.dev/group: "Operations"
+    gethomepage.dev/icon: "longhorn.png"
+    gethomepage.dev/description: "Distributed storage"
+    gethomepage.dev/pod-selector: ""
     # Use the nginx ingress controller
     kubernetes.io/ingress.class: "nginx"
     # Redirect HTTP → HTTPS
