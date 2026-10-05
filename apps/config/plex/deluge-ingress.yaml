@@ -4,6 +4,12 @@ metadata:
   name: deluge-ingress
   namespace: plex
   annotations:
+    gethomepage.dev/enabled: "true"
+    gethomepage.dev/name: "Deluge"
+    gethomepage.dev/group: "Media"
+    gethomepage.dev/icon: "deluge.png"
+    gethomepage.dev/description: "Downloads"
+    gethomepage.dev/pod-selector: "app=deluge"
     # Use the nginx ingress controller
     kubernetes.io/ingress.class: "nginx"
     # Redirect HTTP → HTTPS

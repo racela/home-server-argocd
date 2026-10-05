@@ -4,6 +4,12 @@ metadata:
   name: plex-ingress
   namespace: plex
   annotations:
+    gethomepage.dev/enabled: "true"
+    gethomepage.dev/name: "Plex"
+    gethomepage.dev/group: "Media"
+    gethomepage.dev/icon: "plex.png"
+    gethomepage.dev/description: "Movies and TV"
+    gethomepage.dev/pod-selector: "app.kubernetes.io/name=plex-media-server"
     # Use the nginx ingress controller
     kubernetes.io/ingress.class: "nginx"
     # Redirect HTTP → HTTPS

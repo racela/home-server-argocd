@@ -17,6 +17,12 @@ spec:
         ingress:
           enabled: true
           annotations:
+            gethomepage.dev/enabled: "true"
+            gethomepage.dev/name: "Otterwiki"
+            gethomepage.dev/group: "Applications"
+            gethomepage.dev/icon: "otter-wiki.png"
+            gethomepage.dev/description: "Personal wiki"
+            gethomepage.dev/pod-selector: "app.kubernetes.io/instance=otterwiki"
             kubernetes.io/ingress.class: "nginx"
             nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
             cert-manager.io/cluster-issuer: "home-issuer"  
