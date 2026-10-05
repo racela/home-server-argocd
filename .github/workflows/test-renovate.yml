@@ -242,6 +242,8 @@ jobs:
       # available on a GitHub-hosted runner) to ever reach Ready. `helm
       # template` above still catches schema/rendering breakage for them;
       # only the live install/upgrade check is skipped.
+      #   - gatus: references the cluster's telegram-alerts Secret; the
+      #     isolated test cluster does not have those alerting credentials.
       #   - tailscale-operator: needs a real Tailscale OAuth secret.
       #   - longhorn: needs open-iscsi/iscsid on the host node, which kind
       #     runners don't provide; longhorn-manager crash-loops without it
@@ -254,7 +256,7 @@ jobs:
         if: steps.chart.outputs.chart != ''
         id: installable
         run: |
-          skip_list=("tailscale-operator" "longhorn" "immich")
+          skip_list=("gatus" "tailscale-operator" "longhorn" "immich")
           chart="${{ steps.chart.outputs.chart }}"
           installable=true
           for c in "${skip_list[@]}"; do
