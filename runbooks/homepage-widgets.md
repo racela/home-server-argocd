@@ -44,17 +44,21 @@ expects a Tailscale API access token.
 5. Create a Tailscale API access token. Open the `local-subnet-router`
    machine's details and copy its device ID (ending in `CNTRL`). Track the
    API token's expiry separately from the device key expiry shown in Homepage.
-6. From the repo root, with `kubectl` pointed at the home cluster and
-   `kubeseal` installed, run:
+6. Manually create and seal an Opaque Secret named
+   `homepage-widget-credentials` in namespace `homepage`, using strict scope.
+   Include these keys:
 
-   ```sh
-   python3 runbooks/seal-homepage-widget-credentials.py
-   ```
+   | Key | Value |
+   |---|---|
+   | `HOMEPAGE_VAR_ARGOCD_TOKEN` | Token for the Argo CD `homepage` account |
+   | `HOMEPAGE_VAR_DELUGE_PASSWORD` | Deluge Web UI password |
+   | `HOMEPAGE_VAR_HOMEASSISTANT_TOKEN` | Home Assistant long-lived access token |
+   | `HOMEPAGE_VAR_IMMICH_KEY` | Immich API key with `server.statistics` permission |
+   | `HOMEPAGE_VAR_TAILSCALE_KEY` | Tailscale API access token |
+   | `HOMEPAGE_VAR_TAILSCALE_DEVICE_ID` | Subnet router device ID (not itself a credential) |
 
-   Enter values at the hidden prompts. The helper passes plaintext only
-   through memory/stdin and writes the encrypted SealedSecret to
-   `apps/config/homepage/widget-credentials.yaml`. All six fields are required;
-   rerun the helper with the complete set when rotating credentials.
+   Save only the encrypted SealedSecret as
+   `apps/config/homepage/widget-credentials.yaml`.
 7. Review and commit the generated SealedSecret in a PR. `homepage-config`
    reconciles it using the repository's normal GitOps process.
 8. After the Secret is available, restart Homepage to load the environment:
