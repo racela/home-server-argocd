@@ -129,8 +129,10 @@ Scheduled backups are monitored through Gatus and ArgoCD rather than
 presenting completed Job pods as continuously running services. The
 commented-out Nintendo Museum application is not included. Configuration
 is stored in Git; Homepage needs no persistent volume. The dashboard
-uses the chart's read-only Kubernetes permissions and contains no API
-keys or application credentials.
+uses the chart's read-only Kubernetes permissions. Service widgets load
+API credentials from a SealedSecret; see
+[`runbooks/homepage-widgets.md`](runbooks/homepage-widgets.md) for the widget
+outputs, credential setup, and rotation procedure.
 
 ## Secrets
 

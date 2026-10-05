@@ -49,6 +49,13 @@ spec:
           - name: HOMEPAGE_ALLOWED_HOSTS
             value: "homepage.rafa.local,$(MY_POD_IP):3000"
 
+        # Created by the sealed-secret helper in runbooks/. Optional so missing
+        # widget credentials never prevent the dashboard itself from starting.
+        envFrom:
+          - secretRef:
+              name: homepage-widget-credentials
+              optional: true
+
         resources:
           requests:
             cpu: 50m
@@ -91,12 +98,38 @@ spec:
             title: Rafa's Home Server
             headerStyle: boxed
             statusStyle: dot
+            theme: dark
+            color: slate
+            providers:
+              longhorn:
+                url: http://longhorn-frontend.longhorn-system.svc.cluster.local
             layout:
               Applications:
               Media:
               Operations:
               Infrastructure:
           widgets:
+            - greeting:
+                text: Welcome home, Rafa
+                text_size: 3xl
+            - datetime:
+                text_size: 3xl
+                locale: en-PH
+                format:
+                  timeZone: Asia/Manila
+                  timeStyle: short
+                  hour12: true
+            - datetime:
+                text_size: md
+                locale: en-PH
+                format:
+                  timeZone: Asia/Manila
+                  dateStyle: full
+            - longhorn:
+                expanded: true
+                total: true
+                labels: true
+                nodes: true
             - kubernetes:
                 cluster:
                   show: true
@@ -112,6 +145,19 @@ spec:
           # Web apps are discovered from their Ingress annotations. These
           # workloads have no ingress; use pod selectors for status/metrics.
           services:
+            - Operations:
+                - Tailscale:
+                    icon: tailscale.png
+                    href: https://login.tailscale.com/admin/machines
+                    description: Home subnet router
+                    namespace: tailscale
+                    app: local-subnet-router
+                    podSelector: tailscale.com/parent-resource=local-subnet-router
+                    widget:
+                      type: tailscale
+                      deviceid: "{{HOMEPAGE_VAR_TAILSCALE_DEVICE_ID}}"
+                      key: "{{HOMEPAGE_VAR_TAILSCALE_KEY}}"
+                      fields: ["address", "last_seen", "expires", "update_available"]
             - Infrastructure:
                 - Blocky:
                     icon: blocky.png
@@ -126,6 +172,29 @@ spec:
                     app: cloudnativepg
                     podSelector: app.kubernetes.io/name=cloudnative-pg
 
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: homepage
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: homepage-config
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "4"
+spec:
+  project: default
+  source:
+    repoURL: git@github.com:racela/home-server-argocd.git
+    path: apps/config/homepage
+    targetRevision: HEAD
   destination:
     server: https://kubernetes.default.svc
     namespace: homepage

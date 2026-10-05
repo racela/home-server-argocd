@@ -5,6 +5,10 @@ metadata:
   namespace: argocd
   annotations:
     gethomepage.dev/enabled: "true"
+    gethomepage.dev/widget.type: "argocd"
+    gethomepage.dev/widget.url: "https://argocd-server.argocd.svc.cluster.local"
+    gethomepage.dev/widget.key: "{{HOMEPAGE_VAR_ARGOCD_TOKEN}}"
+    gethomepage.dev/widget.fields: "[\"apps\", \"synced\", \"outOfSync\", \"degraded\"]"
     gethomepage.dev/name: "Argo CD"
     gethomepage.dev/group: "Operations"
     gethomepage.dev/icon: "argo-cd.png"

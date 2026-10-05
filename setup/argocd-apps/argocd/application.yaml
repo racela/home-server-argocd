@@ -21,6 +21,11 @@ spec:
         configs:
           cm:
             exec.enabled: true
+            accounts.homepage: apiKey
+          rbac:
+            policy.csv: |
+              p, role:homepage, applications, get, default/*, allow
+              g, homepage, role:homepage
 
         server:
           replicas: 1         # Single replica for non-HA
