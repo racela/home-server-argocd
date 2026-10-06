@@ -14,11 +14,11 @@ spec:
     spec:
       containers:
         - name: blocky
-          image: spx01/blocky:v0.26.2
+          image: spx01/blocky:v0.35.0
           imagePullPolicy: IfNotPresent
           resources:
             limits:
-              memory: 150Mi
+              memory: 256Mi
             requests:
               cpu: 20m
               memory: 100Mi

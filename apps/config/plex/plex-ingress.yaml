@@ -5,6 +5,10 @@ metadata:
   namespace: plex
   annotations:
     gethomepage.dev/enabled: "true"
+    gethomepage.dev/widget.type: plex
+    gethomepage.dev/widget.url: http://plex-plex-media-server.plex.svc.cluster.local:32400
+    gethomepage.dev/widget.key: "{{HOMEPAGE_VAR_PLEX_TOKEN}}"
+    gethomepage.dev/widget.fields: '["streams", "movies", "tv"]'
     gethomepage.dev/name: "Plex"
     gethomepage.dev/group: "Media"
     gethomepage.dev/icon: "plex.png"
