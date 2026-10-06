@@ -4,6 +4,8 @@ on:
   pull_request:
     paths:
       - apps/config/homepage/metrics-configmap.yaml
+      - apps/config/homepage/metrics-deployment.yaml
+      - tests/test_homepage_sdk.cjs
       - tests/test_homepage_metrics.cjs
       - .github/workflows/test-homepage-metrics.yml
   merge_group:
@@ -20,3 +22,6 @@ jobs:
         with:
           node-version: 24.11.0
       - run: node --test tests/test_homepage_metrics.cjs
+      - uses: mikefarah/yq@v4
+      - name: Install SDK in deployment images and test SQLite
+        run: node tests/test_homepage_sdk.cjs

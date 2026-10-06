@@ -26,8 +26,18 @@ spec:
           type: RuntimeDefault
       initContainers:
         - name: install-sdk
-          image: node:24.11.0-bookworm-slim
+          # Native SQLite compilation needs Python, make and a C++ compiler.
+          image: node:24.11.0-bookworm
           workingDir: /work
+          env:
+            - name: PYTHON
+              value: /usr/bin/python3
+            - name: npm_config_nodedir
+              value: /usr/local
+            - name: npm_config_devdir
+              value: /tmp/node-gyp
+            - name: npm_config_jobs
+              value: "1"
           command: ["/bin/sh", "-ec"]
           args:
             - |
