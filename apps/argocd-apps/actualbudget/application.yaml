@@ -46,6 +46,14 @@ spec:
           className: nginx
           annotations:
             gethomepage.dev/enabled: "true"
+            gethomepage.dev/widget.type: customapi
+            gethomepage.dev/widget.url: http://homepage-metrics.homepage.svc.cluster.local:8080/actual
+            gethomepage.dev/widget.refreshInterval: "60000"
+            gethomepage.dev/widget.display: dynamic-list
+            gethomepage.dev/widget.mappings.items: metrics
+            gethomepage.dev/widget.mappings.name: label
+            gethomepage.dev/widget.mappings.label: value
+            gethomepage.dev/widget.mappings.limit: "3"
             gethomepage.dev/name: "Actual Budget"
             gethomepage.dev/group: "Applications"
             gethomepage.dev/icon: "actual-budget.png"

@@ -1,0 +1,146 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: homepage-metrics
+  namespace: homepage
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: homepage-metrics
+  template:
+    metadata:
+      labels:
+        app: homepage-metrics
+      annotations:
+        # Bump when metrics-configmap.yaml changes (files are copied at startup).
+        metrics-config-version: "1"
+    spec:
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
+      initContainers:
+        - name: install-sdk
+          image: node:24.11.0-bookworm-slim
+          workingDir: /work
+          command: ["/bin/sh", "-ec"]
+          args:
+            - |
+              cp /config/*.cjs /config/package*.json /work/
+              npm ci --omit=dev --no-audit --no-fund --cache /tmp/npm
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: [ALL]
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              memory: 512Mi
+          volumeMounts:
+            - name: config
+              mountPath: /config
+              readOnly: true
+            - name: work
+              mountPath: /work
+            - name: tmp
+              mountPath: /tmp
+      containers:
+        - name: metrics
+          image: node:24.11.0-bookworm-slim
+          workingDir: /work
+          command: ["node", "/work/server.cjs"]
+          env:
+            - name: BLOCKY_DNS
+              value: blocky-stats.blocky.svc.cluster.local
+            - name: ACTUAL_SERVER_URL
+              value: http://actualbudget.actualbudget.svc.cluster.local:5006
+            - name: ACTUAL_CURRENCY
+              value: PHP
+          # Separate from Homepage's widget keys: only this process needs the
+          # Actual server password, sync ID and optional encryption password.
+          envFrom:
+            - secretRef:
+                name: homepage-actual-credentials
+                optional: true
+          ports:
+            - name: http
+              containerPort: 8080
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 10
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: [ALL]
+          resources:
+            requests:
+              cpu: 50m
+              memory: 128Mi
+            limits:
+              memory: 1Gi
+          volumeMounts:
+            - name: work
+              mountPath: /work
+              readOnly: true
+            - name: data
+              mountPath: /data
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: config
+          configMap:
+            name: homepage-metrics
+        - name: work
+          emptyDir: {}
+        - name: data
+          emptyDir:
+            sizeLimit: 2Gi
+        - name: tmp
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: homepage-metrics
+  namespace: homepage
+spec:
+  selector:
+    app: homepage-metrics
+  ports:
+    - name: http
+      port: 8080
+      targetPort: http
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: homepage-metrics
+  namespace: homepage
+spec:
+  podSelector:
+    matchLabels:
+      app: homepage-metrics
+  policyTypes: [Ingress]
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: homepage
+      ports:
+        - protocol: TCP
+          port: 8080
