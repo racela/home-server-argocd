@@ -165,6 +165,38 @@ spec:
                     namespace: blocky
                     app: blocky
                     podSelector: app=blocky
+                    widgets:
+                      - type: customapi
+                        url: http://homepage-metrics.homepage.svc.cluster.local:8080/blocky
+                        refreshInterval: 30000
+                        mappings:
+                          - field: blocking
+                            label: Blocking
+                          - field: queries
+                            label: Queries (≤24h)
+                            format: number
+                          - field: blocked
+                            label: Blocked (≤24h)
+                            format: number
+                          - field: blockedPercent
+                            label: Blocked
+                            suffix: "%"
+                      - type: customapi
+                        url: http://homepage-metrics.homepage.svc.cluster.local:8080/blocky
+                        refreshInterval: 30000
+                        mappings:
+                          - field: nodes
+                            label: DNS nodes
+                            format: number
+                          - field: cached
+                            label: Cached (≤24h)
+                            format: number
+                          - field: cacheHitPercent
+                            label: Cache hits
+                            suffix: "%"
+                          - field: errors
+                            label: Errors (≤24h)
+                            format: number
                 - CloudNativePG:
                     icon: cloudnative-pg.png
                     description: PostgreSQL operator
