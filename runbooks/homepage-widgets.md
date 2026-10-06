@@ -137,8 +137,12 @@ interface exposes only read endpoints. Budget copies are on an ephemeral
 volume and deleted after each refresh; interrupted refreshes are cleaned at
 the start of the next attempt. The maximum refresh runtime is two minutes.
 
-The init container uses `npm ci` with the embedded package-lock.json, so a new
-pod requires npm registry/native-addon download access. Dependencies and code
+The init container uses the full Node Bookworm image with Python, make and
+GCC to compile Actual's native SQLite dependency. It uses the bundled Node
+headers and one build job; the running service keeps the slim image. Both
+images must use the same Node version and Debian release. The init container
+uses `npm ci` with the embedded package-lock.json, so a new pod requires npm
+registry access. Dependencies and code
 are copied into an ephemeral volume. Increment `metrics-config-version` in
 the Deployment whenever the ConfigMap changes to trigger a rollout. Keep the
 SDK compatible with the Actual server when upgrading. The service's readiness
