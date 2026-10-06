@@ -48,3 +48,20 @@ spec:
       port: 4000
       protocol: TCP
       targetPort: 4000
+---
+# Query every Blocky instance for aggregate statistics; the existing ClusterIP
+# service balances requests and cannot provide a stable cluster-wide total.
+apiVersion: v1
+kind: Service
+metadata:
+  name: blocky-stats
+  namespace: blocky
+spec:
+  clusterIP: None
+  publishNotReadyAddresses: true
+  selector:
+    app: blocky
+  ports:
+    - name: http
+      port: 4000
+      targetPort: 4000
