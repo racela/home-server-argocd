@@ -124,10 +124,9 @@ spec:
               Media:
               Operations:
               Infrastructure:
+              Bookmarks:
+                iconsOnly: true
           widgets:
-            - greeting:
-                text: Welcome home, Rafa
-                text_size: 3xl
             - datetime:
                 text_size: 3xl
                 locale: en-PH
@@ -213,12 +212,6 @@ spec:
                           - field: errors
                             label: Errors (≤24h)
                             format: number
-                - CloudNativePG:
-                    icon: cloudnative-pg.png
-                    description: PostgreSQL operator
-                    namespace: cloudnative-pg
-                    app: cloudnativepg
-                    podSelector: app.kubernetes.io/name=cloudnative-pg
 
   destination:
     server: https://kubernetes.default.svc
