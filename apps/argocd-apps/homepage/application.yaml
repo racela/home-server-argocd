@@ -96,19 +96,19 @@ spec:
           bookmarks:
             - Bookmarks:
                 - YouTube:
-                    - abbr: YT
+                    - icon: youtube.png
                       href: https://www.youtube.com/
                 - Facebook:
-                    - abbr: FB
+                    - icon: facebook.png
                       href: https://www.facebook.com/
                 - Reddit:
-                    - abbr: RD
+                    - icon: reddit.png
                       href: https://www.reddit.com/
                 - Twitter:
-                    - abbr: TW
+                    - icon: twitter.png
                       href: https://twitter.com/
                 - Gmail:
-                    - abbr: GM
+                    - icon: gmail.png
                       href: https://mail.google.com/
           settingsString: |
             title: Rafa's Home Server
