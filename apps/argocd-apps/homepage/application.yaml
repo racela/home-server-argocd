@@ -112,6 +112,9 @@ spec:
                       href: https://mail.google.com/
           settingsString: |
             title: Rafa's Home Server
+            background:
+              image: https://raw.githubusercontent.com/racela/home-server-argocd/master/assets/homepage/background.webp
+              brightness: 75
             headerStyle: boxed
             statusStyle: dot
             theme: dark
