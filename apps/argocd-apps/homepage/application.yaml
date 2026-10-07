@@ -87,88 +87,6 @@ spec:
                   - homepage.rafa.local
                 secretName: homepage-tls
 
-        configMaps:
-          header-style:
-            enabled: true
-            data:
-              custom.css: |
-                /* Metrics first; greeting, time and date below (Homepage v2.4.0). */
-                #widgets-wrap {
-                  display: grid;
-                  grid-template-columns: repeat(12, minmax(0, 1fr));
-                  gap: 1rem;
-                  align-items: center;
-                }
-
-                #information-widgets-right {
-                  display: contents;
-                }
-
-                /* Homepage spells the Longhorn class "infomation" in this version. */
-                #widgets-wrap > .infomation-widget-longhorn {
-                  grid-column: 1 / 7;
-                  grid-row: 1;
-                }
-
-                #widgets-wrap > .information-widget-kubernetes {
-                  grid-column: 7 / 13;
-                  grid-row: 1;
-                  justify-self: end;
-                }
-
-                #widgets-wrap > .information-widget-greeting {
-                  grid-column: 1 / 7;
-                  grid-row: 2;
-                }
-
-                #information-widgets-right > .information-widget-datetime:first-child {
-                  grid-column: 7 / 10;
-                  grid-row: 2;
-                  justify-self: end;
-                }
-
-                #information-widgets-right > .information-widget-datetime:last-child {
-                  grid-column: 10 / 13;
-                  grid-row: 2;
-                  justify-self: end;
-                }
-
-                /* Give metrics and long date text room on tablets and phones. */
-                @media (max-width: 1023px) {
-                  #widgets-wrap {
-                    display: flex;
-                    flex-direction: column;
-                    align-items: stretch;
-                  }
-
-                  #widgets-wrap > .infomation-widget-longhorn {
-                    order: 1;
-                  }
-
-                  #widgets-wrap > .information-widget-kubernetes {
-                    order: 2;
-                  }
-
-                  #widgets-wrap > .information-widget-greeting {
-                    order: 3;
-                  }
-
-                  #information-widgets-right > .information-widget-datetime {
-                    order: 4;
-                  }
-                }
-
-        persistence:
-          header-style:
-            enabled: true
-            type: custom
-            volumeSpec:
-              configMap:
-                name: homepage-header-style
-            subPath:
-              - path: custom.css
-                mountPath: /app/config/custom.css
-
         config:
           kubernetes:
             mode: cluster
@@ -206,10 +124,9 @@ spec:
               Media:
               Operations:
               Infrastructure:
+              Bookmarks:
+                iconsOnly: true
           widgets:
-            - greeting:
-                text: Welcome home, Rafa
-                text_size: 3xl
             - datetime:
                 text_size: 3xl
                 locale: en-PH
@@ -295,12 +212,6 @@ spec:
                           - field: errors
                             label: Errors (≤24h)
                             format: number
-                - CloudNativePG:
-                    icon: cloudnative-pg.png
-                    description: PostgreSQL operator
-                    namespace: cloudnative-pg
-                    app: cloudnativepg
-                    podSelector: app.kubernetes.io/name=cloudnative-pg
 
   destination:
     server: https://kubernetes.default.svc
