@@ -93,7 +93,23 @@ spec:
             ingress: true
             gateway: false
             traefik: false
-          bookmarks: []
+          bookmarks:
+            - Bookmarks:
+                - YouTube:
+                    - icon: youtube.png
+                      href: https://www.youtube.com/
+                - Facebook:
+                    - icon: facebook.png
+                      href: https://www.facebook.com/
+                - Reddit:
+                    - icon: reddit.png
+                      href: https://www.reddit.com/
+                - Twitter:
+                    - icon: twitter.png
+                      href: https://twitter.com/
+                - Gmail:
+                    - icon: gmail.png
+                      href: https://mail.google.com/
           settingsString: |
             title: Rafa's Home Server
             headerStyle: boxed
