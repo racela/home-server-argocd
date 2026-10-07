@@ -87,6 +87,17 @@ spec:
                   - homepage.rafa.local
                 secretName: homepage-tls
 
+        persistence:
+          header-style:
+            enabled: true
+            type: custom
+            volumeSpec:
+              configMap:
+                name: homepage-header-style
+            subPath:
+              - path: custom.css
+                mountPath: /app/config/custom.css
+
         config:
           kubernetes:
             mode: cluster
