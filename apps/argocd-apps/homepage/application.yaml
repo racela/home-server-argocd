@@ -87,6 +87,45 @@ spec:
                   - homepage.rafa.local
                 secretName: homepage-tls
 
+        configMaps:
+          appearance:
+            enabled: true
+            data:
+              custom.css: |
+                /* Solid Nord panels keep the wallpaper behind the content. */
+                #information-widgets,
+                .service-card,
+                .bookmark > a {
+                  background-color: #2e3440 !important;
+                  color: #eceff4 !important;
+                }
+
+                .service-card:hover,
+                .bookmark > a:hover {
+                  background-color: #3b4252 !important;
+                }
+
+                .service-description {
+                  color: #d8dee9 !important;
+                }
+
+                .service-group-name,
+                .bookmark-group-name {
+                  color: #eceff4 !important;
+                  text-shadow: 0 1px 3px #171b22;
+                }
+
+        persistence:
+          appearance:
+            enabled: true
+            type: custom
+            volumeSpec:
+              configMap:
+                name: homepage-appearance
+            subPath:
+              - path: custom.css
+                mountPath: /app/config/custom.css
+
         config:
           kubernetes:
             mode: cluster
