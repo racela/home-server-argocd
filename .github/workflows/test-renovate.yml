@@ -35,7 +35,7 @@ jobs:
 
       - name: Install chart-testing (ct)
         if: steps.changed_file.outputs.app_file != ''
-        uses: helm/chart-testing-action@v2.8.0
+        uses: helm/chart-testing-action@v2.9.0
 
       - name: Extract chart info
         if: steps.changed_file.outputs.app_file != ''
