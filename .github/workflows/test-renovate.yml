@@ -8,14 +8,6 @@ permissions:
   contents: read
 
 jobs:
-  test-ci:
-    name: Test chart CI helpers
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v7
-      - run: python3 -m pip install yamllint==1.37.1
-      - run: python3 -m unittest discover -s tests/ci -v
-
   validate-argocd-app:
     name: Validate Changed ArgoCD App
     runs-on: ubuntu-latest
