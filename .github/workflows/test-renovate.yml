@@ -4,10 +4,15 @@ on:
   pull_request:
   merge_group:
 
+permissions:
+  contents: read
+
 jobs:
   validate-argocd-app:
     name: Validate Changed ArgoCD App
     runs-on: ubuntu-latest
+    env:
+      BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.merge_group.base_sha }}
 
     steps:
       - name: Checkout repo
@@ -18,7 +23,7 @@ jobs:
       - name: Identify changed Application manifest
         id: changed_file
         run: |
-          FILE=$(git diff --name-only "origin/${{ github.base_ref }}" | \
+          FILE=$(git diff --name-only --diff-filter=ACMR "$BASE_SHA" HEAD | \
                  grep -E '^(apps|setup)/argocd-apps/.*\.ya?ml$' | head -n 1 || true)
           echo "app_file=$FILE" >> "$GITHUB_OUTPUT"
           if [ -z "$FILE" ]; then
@@ -94,12 +99,12 @@ jobs:
           # What's currently deployed on this branch, so we can test the real
           # upgrade path (old release -> new chart) rather than a fresh install.
           old_version=""
-          if git show "origin/${{ github.base_ref }}:$file" > /tmp/base-file.yaml 2>/dev/null; then
+          if git show "$BASE_SHA:$file" > /tmp/base-file.yaml 2>/dev/null; then
             old_version=$(extract /tmp/base-file.yaml targetRevision)
             [[ "$old_version" == "null" ]] && old_version=""
           fi
           echo "old_version=$old_version" >> "$GITHUB_OUTPUT"
-          echo "ℹ️ Currently deployed version on ${{ github.base_ref }}: ${old_version:-<new app, no prior version>}"
+          echo "ℹ️ Version at base commit $BASE_SHA: ${old_version:-<new app, no prior version>}"
 
       - name: Pull chart(s)
         if: steps.chart.outputs.chart != ''
@@ -268,8 +273,52 @@ jobs:
           echo "installable=$installable" >> "$GITHUB_OUTPUT"
 
       - name: Create kind cluster
+        id: kind
         if: steps.chart.outputs.chart != '' && steps.installable.outputs.installable == 'true'
         uses: helm/kind-action@v1.15.1
+        with:
+          cluster_name: chart-testing
+
+      - name: Preload ECR images with a mirror fallback
+        if: steps.chart.outputs.chart != '' && steps.installable.outputs.installable == 'true'
+        env:
+          CHART: ${{ steps.chart.outputs.chart }}
+          RELEASE: ${{ steps.chart.outputs.release }}
+          NAMESPACE: ${{ steps.chart.outputs.namespace }}
+          SKIP_SCHEMA: ${{ steps.chart.outputs.skip_schema }}
+        run: |
+          extra_args=()
+          if [[ "$SKIP_SCHEMA" == "true" ]]; then
+            extra_args+=(--skip-schema-validation)
+          fi
+          chart_dirs=("charts/$CHART")
+          if [[ "$have_old_chart" == "true" ]]; then
+            chart_dirs+=("charts-old/$CHART")
+          fi
+          : > image-manifests.yaml
+          for chart_dir in "${chart_dirs[@]}"; do
+            helm template "$RELEASE" "$chart_dir" --namespace "$NAMESPACE" \
+              -f repo-values.yaml "${extra_args[@]}" >> image-manifests.yaml
+            echo '---' >> image-manifests.yaml
+          done
+          yq -r '.. | select(tag == "!!map") | .image | select(tag == "!!str")' \
+            image-manifests.yaml | sort -u > images.txt
+          mapfile -t images < images.txt
+          bash .github/scripts/preload-chart-images.sh chart-testing "${images[@]}"
+
+      # The plugin uses Certificate/Issuer resources and waits for their TLS
+      # Secrets. CRDs alone are insufficient: run the real controller/webhook,
+      # using the cert-manager version and values deployed by this repository.
+      - name: Provide cert-manager for Barman
+        if: steps.chart.outputs.chart == 'plugin-barman-cloud' && steps.installable.outputs.installable == 'true'
+        run: |
+          app=setup/argocd-apps/cert-manager/application.yaml
+          repo=$(yq e 'select(di == 0) | .spec.source.repoURL' "$app")
+          version=$(yq e 'select(di == 0) | .spec.source.targetRevision' "$app")
+          yq e 'select(di == 0) | .spec.source.helm.values' "$app" > cert-manager-values.yaml
+          helm install cert-manager cert-manager --repo "$repo" --version "$version" \
+            --namespace cert-manager --create-namespace -f cert-manager-values.yaml \
+            --wait --timeout 5m
 
       # Real longhorn is excluded above (needs open-iscsi kind can't provide),
       # but most of our charts still request `storageClass: longhorn` for
@@ -336,7 +385,7 @@ jobs:
           fi
 
       - name: Debug on failure
-        if: failure() && steps.chart.outputs.chart != ''
+        if: failure() && steps.kind.outcome == 'success'
         run: |
           ns="${{ steps.chart.outputs.namespace }}"
           echo "=== Pods ==="

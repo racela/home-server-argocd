@@ -29,15 +29,15 @@ rules:
     max-end: 0
   hyphens:
     max-spaces-after: 1
-  indentation:
-    spaces: consistent
-    indent-sequences: whatever      # - list indentation will handle both indentation and without
-    check-multi-line-strings: false
+  # This config lints downloaded third-party charts. Their whitespace is not
+  # under our control; retain syntax and duplicate-key checks without enforcing
+  # our formatting on published packages (e.g. csi-driver-nfs and otterwiki).
+  indentation: disable
   key-duplicates: enable
   line-length: disable              # Lines can be any length
   new-line-at-end-of-file: enable
   new-lines:
     type: unix
-  trailing-spaces: enable
+  trailing-spaces: disable
   truthy:
     level: warning
