@@ -6,6 +6,9 @@ set -euo pipefail
 
 cluster="$1"
 shift
+archive=$(mktemp)
+trap 'rm -f "$archive"' EXIT
+
 for image in "$@"; do
   case "$image" in
     ecr-public.aws.com/docker/library/*)
@@ -22,5 +25,9 @@ for image in "$@"; do
     docker pull "$mirror"
     docker tag "$mirror" "$image"
   fi
-  kind load docker-image --name "$cluster" "$image"
+  # Export only the ubuntu-latest runner's platform. With Docker's containerd
+  # store, kind load docker-image can reference missing multi-platform blobs.
+  # https://kind.sigs.k8s.io/docs/user/known-issues/#unable-to-kind-load-docker-images
+  docker image save --platform linux/amd64 --output "$archive" "$image"
+  kind load image-archive --name "$cluster" "$archive"
 done
