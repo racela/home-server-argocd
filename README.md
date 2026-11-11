@@ -83,6 +83,7 @@ Applications (`apps/`):
 | Actual Budget | Personal budgeting; 1Gi data volume on Longhorn, HTTPS at `actualbudget.rafa.local` |
 | Tailscale operator | Remote access |
 | Homepage | Cluster dashboard with ingress discovery at `homepage.rafa.local` |
+| Hermes Agent | Personal agent with a private browser interface and a 5Gi Longhorn volume. See [setup](runbooks/hermes-agent.md). |
 
 `apps/argocd-apps/nintendo-museum-alerts` is currently commented out.
 
