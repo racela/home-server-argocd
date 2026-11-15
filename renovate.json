@@ -13,6 +13,14 @@
       "commitMessageExtra": "{{currentVersion}} -> {{newVersion}}"
     },
     {
+      "description": "Look up the Immich OCI chart without appending its name twice",
+      "matchManagers": ["argocd"],
+      "matchDatasources": ["docker"],
+      "matchFileNames": ["apps/argocd-apps/immich/application.yaml"],
+      "matchDepNames": ["ghcr.io/immich-app/immich-charts/immich/immich"],
+      "overridePackageName": "ghcr.io/immich-app/immich-charts/immich"
+    },
+    {
       "matchUpdateTypes": ["patch"],
       "matchCurrentVersion": "!/^0/",
       "automerge": true
