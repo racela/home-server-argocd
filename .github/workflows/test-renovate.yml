@@ -257,17 +257,19 @@ jobs:
       #     existingClaim PVC (immich-library-pvc) provisioned by other
       #     Applications in the real cluster, not by this chart. This
       #     isolated single-chart test has no way to see those.
+      #   - zigbee2mqtt: needs runtime Secrets from the Mosquitto Application
+      #     and a reachable coordinator on the home LAN.
       - name: Determine if live install is possible
         if: steps.chart.outputs.chart != ''
         id: installable
         run: |
-          skip_list=("gatus" "tailscale-operator" "longhorn" "immich")
+          skip_list=("gatus" "tailscale-operator" "longhorn" "immich" "zigbee2mqtt")
           chart="${{ steps.chart.outputs.chart }}"
           installable=true
           for c in "${skip_list[@]}"; do
             if [[ "$chart" == "$c" ]]; then
               installable=false
-              echo "⚠️ Skipping live install for '$chart': requires a real external credential not available in CI."
+              echo "⚠️ Skipping live install for '$chart': its runtime dependencies are unavailable in CI."
             fi
           done
           echo "installable=$installable" >> "$GITHUB_OUTPUT"
