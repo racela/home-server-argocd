@@ -1,0 +1,79 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: zigbee2mqtt
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://charts.zigbee2mqtt.io
+    chart: zigbee2mqtt
+    targetRevision: 2.14.3
+    helm:
+      releaseName: zigbee2mqtt
+      values: |
+        service:
+          type: ClusterIP
+
+        secretesMigratorContainer:
+          securityContext:
+            runAsUser: 1000
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: [ALL]
+
+        statefulset:
+          storage:
+            enabled: true
+            storageClassName: longhorn
+            size: 1Gi
+          secrets:
+            name: zigbee2mqtt-config
+          podSecurityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
+            runAsGroup: 1000
+            fsGroup: 1000
+            seccompProfile:
+              type: RuntimeDefault
+          securityContext:
+            privileged: false
+            allowPrivilegeEscalation: false
+            capabilities:
+              add: null
+              drop: [ALL]
+          env:
+            - name: ZIGBEE2MQTT_CONFIG_SERIAL_PORT
+              valueFrom:
+                secretKeyRef:
+                  name: zigbee2mqtt-config
+                  key: serial-port
+
+        zigbee2mqtt:
+          timezone: Asia/Manila
+          mqtt:
+            server: mqtt://mosquitto:1883
+            user: zigbee
+            password: '!secret.yaml mqtt_password'
+          serial:
+            port: null
+            adapter: zstack
+            baudrate: 115200
+            disable_led: false
+          advanced:
+            network_key: '!secret.yaml network_key'
+            transmit_power: 20
+          homeassistant:
+            enabled: true
+            status_topic: homeassistant/status
+          frontend:
+            enabled: true
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: zigbee2mqtt
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
