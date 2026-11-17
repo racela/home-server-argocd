@@ -1,0 +1,14 @@
+---
+apiVersion: bitnami.com/v1alpha1
+kind: SealedSecret
+metadata:
+  name: mosquitto-auth
+  namespace: zigbee2mqtt
+spec:
+  encryptedData:
+    passwords: AgBTXtI5wDIvMnC7TKC5YT8fvaKC0yB8vIMFNNxGM/ng586EgXPatgs7N3ygH+DxAGkGfQpgxFzcSqf7//7fBUMQaN3AnZZXNj02b60d2E+ONEHRo8PtCYd7y6bwVJJ6pG3U6sMia/wII4tUorlITWnU00YzMC1QxAt0cmQEDDQH+G9gp0JlB6HXBB7Onakfi3rfBYFGnpqLduino3BagjlTZTa1HTS2oSXWZHkMjOSCpv5uokGZKEy74yQjEtApkVYeG32AI73RWpC6jyHZyUc1x5ehepPVeUMMOniLjvmNhe0Zz9vTnMexUZcTzss7CXnrks8F0aVd2MGdu5jpwotuD4QtFk0cJS+y66JKzSHIIVpxNnTY4/EZYGoY0oBkUDMu/bvJcdJTzCIEOT/B+Ilh+47We94/OAPD6ozRKVOJzWERAtudaRgEfbF2681lvvorE1m0MIWv26e14L9ts1uZlMavzdbTU240+9pJ4SuBVWJ/EPwXN/NzNjQ5aupAheRZwFhMzh62IjZlKgIaqZK5Fr9wMn3pO5bRUXMxgf/AsRSN1cvDjpbhMx7adEbS+IKPF0+7nfPbo4Zhtb2TuBtgDrobO3FHZvRBC8qTP6PX4bILmKl7Tmu9XztORMTme2y0jXhup1pnbFje8Jk/+vudzHGecP3+in/hZ8QVuLKlVU4KmxsRxAH8XNPvVBDsLIFSm2+eIWnJhdOxKsgqmZOcifBNVJlrhTWGHMdtLuLX7c7Za21XCJFFgZu0n8wKpSDhDrw6vOX9R1hBRFciNOgjSsHMfnSegCc1+n51brpxWFfu+c6v0zw4Y4ysks4NqXXkjO5p2kd53m+m8ajVfrhYt9zw4H2vb8BVronrQMsX89i9t6y44lYwJWFdmdNdn6gDBxnJSr1Q0rLxfMhtpjuilSzBwrs2gFQY9ArQXjt0GeqbIaUlsWwk3VdB7Vu+9LJ3
+  template:
+    metadata:
+      name: mosquitto-auth
+      namespace: zigbee2mqtt
+    type: Opaque
