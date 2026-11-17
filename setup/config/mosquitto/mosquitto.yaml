@@ -22,7 +22,7 @@ spec:
   storageClassName: longhorn
   resources:
     requests:
-      storage: 1Gi
+      storage: 128Mi
 ---
 apiVersion: v1
 kind: Service
@@ -86,11 +86,14 @@ spec:
             limits:
               memory: 128Mi
           volumeMounts:
+            # Mosquitto 2.1.2 rejects symlinked files. Mount each file directly.
             - name: config
-              mountPath: /mosquitto/config
+              mountPath: /mosquitto/config/mosquitto.conf
+              subPath: mosquitto.conf
               readOnly: true
             - name: auth
-              mountPath: /mosquitto/auth
+              mountPath: /mosquitto/auth/passwords
+              subPath: passwords
               readOnly: true
             - name: data
               mountPath: /mosquitto/data

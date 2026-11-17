@@ -60,7 +60,8 @@ json.dump({"mqtt_password": sys.stdin.read(), "network_key": list(secrets.token_
 
 These Secrets live in the cluster. On a retry after partial setup, use the same
 MQTT password and create only the missing Secret. Preserve the existing network
-key when updating the coordinator address or broker credentials.
+key when updating the coordinator address or broker credentials. Restart each
+workload after updating its Secret so the replacement pod mounts the new file.
 
 ## 2. Sync and check the applications
 
