@@ -1,11 +1,42 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": [
-    "config:recommended"
-  ],
+  "extends": ["config:recommended"],
   "argocd": {
     "managerFilePatterns": ["/\\.yaml$/"]
   },
+  "internalChecksFilter": "strict",
+  "kubernetes": {
+    "managerFilePatterns": ["/^(apps|setup)/config/.*\\.ya?ml$/"]
+  },
+  "customManagers": [
+    {
+      "customType": "regex",
+      "description": "Manage the CloudNativePG database image",
+      "managerFilePatterns": ["apps/config/cloudnative-pg/cluster.yaml"],
+      "matchStrings": ["imageName: (?<depName>ghcr\\.io/[^:\\s]+):(?<currentValue>[^@\\s]+)(?:@(?<currentDigest>sha256:[a-f0-9]{64}))?"],
+      "datasourceTemplate": "docker",
+      "versioningTemplate": "regex:^(?<compatibility>\\d+)-(?<major>\\d+)\\.(?<minor>\\d+)\\.(?<patch>\\d+)$",
+      "autoReplaceStringTemplate": "imageName: {{{depName}}}:{{{newValue}}}{{#if newDigest}}@{{{newDigest}}}{{/if}}"
+    },
+    {
+      "customType": "regex",
+      "description": "Manage the image tag and digest in Homepage's inline Helm values",
+      "managerFilePatterns": ["apps/argocd-apps/homepage/application.yaml"],
+      "matchStrings": ["          tag: (?<currentValue>[^@\\s]+)(?:@(?<currentDigest>sha256:[a-f0-9]{64}))?"],
+      "depNameTemplate": "ghcr.io/gethomepage/homepage",
+      "datasourceTemplate": "docker",
+      "autoReplaceStringTemplate": "          tag: {{{newValue}}}{{#if newDigest}}@{{{newDigest}}}{{/if}}"
+    },
+    {
+      "customType": "regex",
+      "description": "Keep the Immich OCI chart digest in targetRevision and the version in a comment",
+      "managerFilePatterns": ["apps/argocd-apps/immich/application.yaml"],
+      "matchStrings": ["targetRevision: (?:(?<currentDigest>sha256:[a-f0-9]{64}) # renovate: )?(?<currentValue>\\d+\\.\\d+\\.\\d+(?:-[a-zA-Z0-9.-]+)?)"],
+      "depNameTemplate": "ghcr.io/immich-app/immich-charts/immich",
+      "datasourceTemplate": "docker",
+      "autoReplaceStringTemplate": "targetRevision: {{#if newDigest}}{{{newDigest}}} # renovate: {{/if}}{{{newValue}}}"
+    }
+  ],
   "packageRules": [
     {
       "matchManagers": ["argocd"],
@@ -13,17 +44,47 @@
       "commitMessageExtra": "{{currentVersion}} -> {{newVersion}}"
     },
     {
-      "description": "Look up the Immich OCI chart without appending its name twice",
+      "description": "The regex manager owns the Immich OCI revision so it can write a bare digest",
       "matchManagers": ["argocd"],
       "matchDatasources": ["docker"],
       "matchFileNames": ["apps/argocd-apps/immich/application.yaml"],
-      "matchDepNames": ["ghcr.io/immich-app/immich-charts/immich/immich"],
-      "overridePackageName": "ghcr.io/immich-app/immich-charts/immich"
+      "enabled": false
+    },
+    {
+      "matchManagers": ["kubernetes"],
+      "matchDatasources": ["kubernetes-api"],
+      "enabled": false
+    },
+    {
+      "matchManagers": ["kubernetes", "custom.regex"],
+      "matchDatasources": ["docker"],
+      "pinDigests": true
+    },
+    {
+      "matchDatasources": ["docker", "helm"],
+      "minimumReleaseAge": "7 days",
+      "minimumReleaseAgeBehaviour": "timestamp-required"
     },
     {
       "matchUpdateTypes": ["patch"],
-      "matchCurrentVersion": "!/^0/",
+      "matchCurrentVersion": "!/^v?0[.]/",
       "automerge": true
+    },
+    {
+      "description": "The GHCR cooldown runs in GitHub Actions because Renovate cannot age GHCR updates",
+      "matchDatasources": ["docker"],
+      "matchPackageNames": ["ghcr.io/**"],
+      "minimumReleaseAge": null,
+      "addLabels": ["ghcr-cooldown"],
+      "automerge": false
+    },
+    {
+      "description": "Let the cooldown workflow merge eligible GHCR patches after CI",
+      "matchDatasources": ["docker"],
+      "matchPackageNames": ["ghcr.io/**", "!ghcr.io/tensorchord/cloudnative-vectorchord"],
+      "matchUpdateTypes": ["patch"],
+      "matchCurrentVersion": "!/^v?0[.]/",
+      "addLabels": ["ghcr-cooldown-automerge"]
     }
   ]
 }

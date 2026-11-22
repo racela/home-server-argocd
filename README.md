@@ -168,11 +168,27 @@ the header comment in each file before applying it.
 
 ## Dependency updates and CI
 
-[Renovate](https://docs.renovatebot.com/) opens PRs for Helm chart
-versions referenced in the Application manifests, and auto-merges
-patch-level updates for stable (non-0.x) charts. On every PR, a workflow
-(`.github/workflows/test-renovate.yml`) takes the changed Application,
-installs its chart with this repo's real values using chart-testing,
-and where possible tests the upgrade from the currently deployed
-version, so a broken bump fails before merge. Direct pushes to `master`
-are possible for the repo owner.
+[Renovate](https://docs.renovatebot.com/) opens PRs to add and update
+SHA-256 pins for container images in the Kubernetes manifests, the explicit
+Homepage and CloudNativePG image overrides, and the Immich OCI chart. Image
+pins retain the version tag alongside the digest. Traditional Helm
+repositories use exact chart versions. Images supplied by chart defaults
+are managed by those charts.
+
+Helm repositories and Docker registries that Renovate can date have a
+seven-day release cooldown. Renovate holds updates missing a timestamp
+outside the GHCR exception.
+
+GHCR PRs use the `GHCR cooldown` commit status. GitHub Actions records when
+it first sees the proposed changes, keeps that time across rebases with
+the same diff, and restarts the seven-day clock if the update changes.
+An hourly run refreshes pending statuses. The workflow squash-merges only
+eligible stable GHCR patches after the cooldown and existing merge checks
+pass. The CloudNativePG database image, major and minor upgrades, and
+initial digest pins are reviewed manually. To enforce the wait on manual
+merges too, add `GHCR cooldown` to the Main ruleset's required status checks
+after the workflow has published its first status.
+
+The [chart validation workflow](.github/workflows/test-renovate.yml)
+tests changed Argo CD chart Applications with the repo's values and
+tests upgrades from the base branch where possible.
