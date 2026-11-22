@@ -1,0 +1,31 @@
+name: GHCR dependency cooldown
+
+on:
+  # Use the base repository's workflow and script. PR files are read as data.
+  pull_request_target:
+    branches: [master]
+    types: [opened, reopened, synchronize, labeled, unlabeled, edited]
+  schedule:
+    - cron: '23 * * * *'
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  check:
+    name: Check GHCR dependency age
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+      statuses: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+
+      - name: Update pull request statuses
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 .github/scripts/ghcr-cooldown.py

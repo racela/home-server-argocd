@@ -128,7 +128,13 @@ jobs:
             else
               chart_ref="${repo}/${chart}"
             fi
-            pull() { helm pull "$chart_ref" --version "$1" --untar --untardir "$2"; }
+            pull() {
+              if [[ "$1" == sha256:* ]]; then
+                helm pull "$chart_ref@$1" --untar --untardir "$2"
+              else
+                helm pull "$chart_ref" --version "$1" --untar --untardir "$2"
+              fi
+            }
           else
             helm repo add testrepo "$repo"
             helm repo update
